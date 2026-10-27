@@ -422,6 +422,10 @@ class RouteActivity : ComponentActivity() {
                                 TranslatorPage()
                             }
 
+                            entry<Screen.TranslationHistory> { key ->
+                                TranslatorPage(historyId = key.id)
+                            }
+
                             entry<Screen.Setting> {
                                 SettingPage()
                             }
@@ -701,6 +705,9 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object Translator : Screen
+
+    @Serializable
+    data class TranslationHistory(val id: String) : Screen
 
     @Serializable
     data object Setting : Screen

@@ -92,7 +92,10 @@ import org.koin.androidx.compose.koinViewModel
 import java.util.Locale
 
 @Composable
-fun TranslatorPage(vm: TranslatorVM = koinViewModel()) {
+fun TranslatorPage(vm: TranslatorVM = koinViewModel(), historyId: String? = null) {
+    LaunchedEffect(historyId) {
+        historyId?.let { vm.loadHistory(it) }
+    }
     val settings by vm.settings.collectAsStateWithLifecycle()
     val inputText by vm.inputText.collectAsStateWithLifecycle()
     val translatedText by vm.translatedText.collectAsStateWithLifecycle()

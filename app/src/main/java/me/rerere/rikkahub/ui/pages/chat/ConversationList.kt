@@ -83,6 +83,7 @@ fun ColumnScope.ConversationList(
     listState: LazyListState,
     modifier: Modifier = Modifier,
     header: (@Composable () -> Unit)? = null,
+    autoScrollToCurrent: Boolean = true,
     onClick: (Conversation) -> Unit = {},
     onDelete: (Conversation) -> Unit = {},
     onRegenerateTitle: (Conversation) -> Unit = {},
@@ -94,8 +95,8 @@ fun ColumnScope.ConversationList(
     // 列表顶部若放了 header，会话项在 LazyColumn 中的位置要往后挪一位
     val headerCount = if (header != null) 1 else 0
 
-    LaunchedEffect(current.id, conversations.itemCount, hasScrolledToCurrent) {
-        if (hasScrolledToCurrent) return@LaunchedEffect
+    LaunchedEffect(current.id, conversations.itemCount, hasScrolledToCurrent, autoScrollToCurrent) {
+        if (!autoScrollToCurrent || hasScrolledToCurrent) return@LaunchedEffect
         val itemIndex = conversations.itemSnapshotList.items.indexOfFirst {
             (it as? ConversationListItem.Item)?.conversation?.id == current.id
         }

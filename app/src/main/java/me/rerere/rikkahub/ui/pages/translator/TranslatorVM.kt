@@ -9,6 +9,7 @@ import androidx.paging.cachedIn
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -62,6 +63,7 @@ class TranslatorVM(
 
     // 当前任务
     private var currentJob: Job? = null
+    private var loadedHistoryId: String? = null
 
     fun updateSettings(fn: (Settings) -> Settings) {
         viewModelScope.launch {
@@ -90,6 +92,13 @@ class TranslatorVM(
         updateSettings { it.copy(translateTargetLanguage = entry.targetLanguage) }
     }
 
+    suspend fun loadHistory(id: String) {
+        if (loadedHistoryId == id) return
+        val entry = historyRepository.getById(id)
+        loadedHistoryId = id
+        entry?.let(::restoreHistory)
+    }
+
     fun deleteHistory(entry: TranslationHistoryEntity) {
         viewModelScope.launch { historyRepository.deleteById(entry.id) }
     }
@@ -115,11 +124,13 @@ class TranslatorVM(
                 translationHandler.translateText(
                     settings = settings,
                     sourceText = inputText,
-                    targetLanguage = targetLanguage
-                ) { translatedText ->
+                    targetLanguage = targetLanguage,
+                ).collect { translatedText ->
+                    // 在主线程更新，避免 IO 流的旧回调覆盖刚恢复的历史记录。
                     _translatedText.value = translatedText
-                }.collect { /* 结果已经在 onStreamUpdate 里更新 */ }
+                }
 
+                coroutineContext.ensureActive()
                 val result = _translatedText.value
                 if (result.isNotBlank()) {
                     historyRepository.add(

@@ -1,6 +1,8 @@
 package me.rerere.rikkahub.ui.components.ai
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -8,7 +10,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -36,14 +37,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import me.rerere.hugeicons.HugeIcons
-import me.rerere.hugeicons.stroke.ArrowDown01
 import me.rerere.hugeicons.stroke.Edit03
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
@@ -64,43 +66,34 @@ fun AssistantPicker(
     val state = rememberAssistantState(settings, onSelectAssistant)
     val defaultAssistantName = stringResource(R.string.assistant_page_default_assistant)
     var showPicker by remember { mutableStateOf(false) }
+    val switchAssistantLabel = stringResource(R.string.safe_mode_switch_assistant)
+    val assistantSettingsLabel = stringResource(R.string.assistant_page_title)
 
     Surface(
-        onClick = onClickSetting,
-        modifier = modifier,
+        modifier = modifier
+            .height(40.dp)
+            .clip(CircleShape)
+            .combinedClickable(
+                role = Role.Button,
+                onClick = onClickSetting,
+                onClickLabel = assistantSettingsLabel,
+                onLongClickLabel = switchAssistantLabel,
+                onLongClick = { showPicker = true },
+            ),
         shape = CircleShape,
         color = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
     ) {
-        Row(
-            modifier = Modifier
-                .heightIn(min = 56.dp)
-                .padding(start = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
+        Box(
+            modifier = Modifier.padding(horizontal = 12.dp),
+            contentAlignment = Alignment.Center,
         ) {
-            Column(
-                modifier = Modifier.weight(1f),
-            ) {
-                Text(
-                    text = state.currentAssistant.name.ifEmpty { defaultAssistantName },
-                    style = MaterialTheme.typography.labelLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = stringResource(R.string.assistant_page_title),
-                    style = MaterialTheme.typography.labelSmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            IconButton(onClick = { showPicker = true }) {
-                Icon(
-                    imageVector = HugeIcons.ArrowDown01,
-                    contentDescription = stringResource(R.string.safe_mode_switch_assistant),
-                    modifier = Modifier.size(20.dp),
-                )
-            }
+            Text(
+                text = state.currentAssistant.name.ifEmpty { defaultAssistantName },
+                style = MaterialTheme.typography.labelLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 

@@ -12,6 +12,8 @@ class TranslationHistoryRepository(
 ) {
     fun pagingAll(): PagingSource<Int, TranslationHistoryEntity> = dao.pagingAll()
 
+    suspend fun getById(id: String): TranslationHistoryEntity? = dao.getById(id)
+
     suspend fun add(
         sourceText: String,
         translatedText: String,
