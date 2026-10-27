@@ -1,0 +1,115 @@
+name: Test Build
+
+# 功能分支的测试包：推送 feat/** 分支或手动触发时构建 debug 包。
+# debug 包名带 .debug 后缀，桌面名称改成「RikkaHub 测试版」，可以和正式版同时安装，不会覆盖。
+on:
+  push:
+    branches:
+      - 'feat/**'
+  workflow_dispatch:
+
+concurrency:
+  group: test-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # 发布测试 Prerelease 需要写权限
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'jetbrains'
+          java-version: '21'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # web 模块的 preBuild 会执行 `pnpm run build` 构建前端
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web-ui/pnpm-lock.yaml
+
+      - name: Install web-ui dependencies
+        working-directory: web-ui
+        run: pnpm install --frozen-lockfile
+
+      - name: Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+
+      # 测试包不接入真实的 Firebase：google-services 插件要求有配置文件，这里放一份占位配置
+      - name: Prepare build files
+        run: |
+          cat > app/google-services.json <<'EOF'
+          {
+            "project_info": {
+              "project_number": "000000000000",
+              "project_id": "rikkahub-test-build",
+              "storage_bucket": "rikkahub-test-build.appspot.com"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
+                  "android_client_info": { "package_name": "me.rerere.rikkahub.debug" }
+                },
+                "oauth_client": [],
+                "api_key": [{ "current_key": "AIzaSyA0000000000000000000000000000000" }],
+                "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
+              }
+            ],
+            "configuration_version": "1"
+          }
+          EOF
+          # 桌面名称和正式版区分开
+          sed -i '0,/android:label="@string\/app_name"/s//android:label="RikkaHub 测试版"/' app/src/main/AndroidManifest.xml
+          grep -n 'RikkaHub 测试版' app/src/main/AndroidManifest.xml
+
+      - name: Unit tests
+        run: |
+          chmod +x gradlew
+          ./gradlew :mediagen:testDebugUnitTest
+
+      - name: Gradle Build
+        run: ./gradlew assembleGithubDebug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rikkahub-test-${{ github.sha }}
+          path: app/build/outputs/apk/github/debug/*.apk
+
+      # 固定 tag 的 Prerelease，手机上点链接就能直接下载单个 apk
+      - name: Publish test prerelease
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: test-build
+          target_commitish: ${{ github.sha }}
+          name: Test Build (${{ github.ref_name }})
+          prerelease: true
+          make_latest: false
+          body: |
+            测试构建：`${{ github.ref_name }}` @ `${{ github.sha }}`
+
+            debug 包，包名 `me.rerere.rikkahub.debug`，桌面名称「RikkaHub 测试版」，可与正式版共存。
+            每次构建的签名不同，更新测试版需先卸载旧的测试版（不影响正式版）。
+          files: app/build/outputs/apk/github/debug/*.apk
