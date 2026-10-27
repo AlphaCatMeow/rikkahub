@@ -1416,6 +1416,8 @@
   <string name="media_creation_page_recent_outputs_empty">Пока нет сгенерированных результатов для повторного использования</string>
   <string name="media_creation_page_no_models">Пока нет доступных моделей. Сначала добавьте провайдера медиагенерации.</string>
   <string name="media_creation_page_manage_providers">Управление провайдерами</string>
+  <string name="media_creation_page_provider_settings">Настройки провайдеров</string>
+  <string name="media_creation_page_add_provider">Добавить провайдера</string>
   <string name="media_creation_page_params_title">Параметры генерации</string>
   <string name="media_creation_page_share_failed">Не удалось поделиться</string>
   <string name="media_creation_page_continue_video">Продолжить</string>
@@ -1498,6 +1500,12 @@
   <string name="setting_media_page_models_desc">ID моделей передаются в API как есть</string>
   <string name="setting_media_page_model_id">ID модели</string>
   <string name="setting_media_page_add_model">Добавить модель</string>
+  <string name="setting_media_page_fetch_models">Получить у провайдера</string>
+  <string name="setting_media_page_fetch_models_desc">Выбрать модели из списка моделей провайдера</string>
+  <string name="setting_media_page_show_unrecognized">Показать другие модели (%1$d)</string>
+  <string name="setting_media_page_fetch_failed">Не удалось получить список моделей: %1$s</string>
+  <string name="setting_media_page_fetch_empty">Подходящих моделей нет</string>
+  <string name="setting_media_page_retry">Повторить</string>
   <string name="media_creation_page_param_watermark">Водяной знак</string>
   <string name="media_creation_page_param_prompt_enhancement">Улучшение промпта</string>
   <string name="media_creation_page_param_seed">Случайный seed</string>

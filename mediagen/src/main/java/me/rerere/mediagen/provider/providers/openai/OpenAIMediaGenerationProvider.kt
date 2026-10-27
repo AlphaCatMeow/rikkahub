@@ -14,6 +14,8 @@ import me.rerere.mediagen.model.MediaGenerationRequest
 import me.rerere.mediagen.model.MediaGenerationStatus
 import me.rerere.mediagen.model.MediaGenerationTask
 import me.rerere.mediagen.model.MediaGenerationUsage
+import me.rerere.mediagen.model.MediaKind
+import me.rerere.mediagen.model.RemoteMediaModel
 import me.rerere.mediagen.provider.MediaGenerationProvider
 import me.rerere.mediagen.provider.MediaGenerationProviderSetting
 import me.rerere.mediagen.provider.providers.executeJson
@@ -53,6 +55,35 @@ class OpenAIMediaGenerationProvider(
             builder.url("$baseUrl/images/edits").post(buildEditBody(setting, model, request))
         }.build()
         parseTask(client.executeJson(httpRequest, id), model.modelId)
+    }
+
+    override val supportsModelListing: Boolean get() = true
+
+    // /models 不区分模型类型，官方和中转都会把聊天模型一起列出来，只能按名字猜哪些是图像模型
+    override suspend fun listModels(
+        setting: MediaGenerationProviderSetting.OpenAI,
+    ): Result<List<RemoteMediaModel>> = runCatching {
+        val httpRequest = Request.Builder()
+            .url("${setting.baseUrl.trimEnd('/')}/models")
+            .addHeader("Authorization", "Bearer ${setting.apiKey}")
+            .get()
+            .build()
+        parseModels(client.executeJson(httpRequest, id))
+    }
+
+    internal fun parseModels(root: JsonObject): List<RemoteMediaModel> {
+        val data = root["data"] as? JsonArray ?: error("OpenAI model list does not contain data")
+        return data
+            .mapNotNull { (it as? JsonObject)?.string("id")?.takeIf(String::isNotBlank) }
+            .distinct()
+            .map { modelId ->
+                RemoteMediaModel(
+                    modelId = modelId,
+                    kind = MediaKind.IMAGE,
+                    recognized = IMAGE_MODEL_HINT.containsMatchIn(modelId),
+                )
+            }
+            .sortedWith(compareByDescending<RemoteMediaModel> { it.recognized }.thenBy { it.modelId })
     }
 
     internal fun buildGenerationBody(
@@ -161,6 +192,10 @@ class OpenAIMediaGenerationProvider(
 
     private companion object {
         const val PROVIDER_ID = "openai"
+        val IMAGE_MODEL_HINT = Regex(
+            "image|dall-?e|imagen|flux|seedream|midjourney|stable-diffusion|sdxl|sd3|kolors|recraft|ideogram|cogview|hidream|nano-banana",
+            RegexOption.IGNORE_CASE,
+        )
         val EDIT_IMAGE_MEDIA_TYPES = mapOf(
             "png" to "image/png",
             "jpg" to "image/jpeg",

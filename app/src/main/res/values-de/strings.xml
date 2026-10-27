@@ -1417,6 +1417,8 @@
   <string name="media_creation_page_recent_outputs_empty">Noch keine generierten Ergebnisse zum Wiederverwenden</string>
   <string name="media_creation_page_no_models">Noch keine Modelle verfügbar. Füge zuerst einen Anbieter für Mediengenerierung hinzu.</string>
   <string name="media_creation_page_manage_providers">Anbieter verwalten</string>
+  <string name="media_creation_page_provider_settings">Anbietereinstellungen</string>
+  <string name="media_creation_page_add_provider">Anbieter hinzufügen</string>
   <string name="media_creation_page_params_title">Generierungsparameter</string>
   <string name="media_creation_page_no_providers">Es ist noch kein Anbieter für die Mediengenerierung eingerichtet</string>
   <string name="media_creation_page_cancelled_task_running">Warten beendet. Die Aufgabe läuft möglicherweise noch auf dem Server weiter.</string>
@@ -1448,6 +1450,12 @@
   <string name="setting_media_page_models_desc">Modell-IDs werden unverändert an die API gesendet</string>
   <string name="setting_media_page_model_id">Modell-ID</string>
   <string name="setting_media_page_add_model">Modell hinzufügen</string>
+  <string name="setting_media_page_fetch_models">Vom Anbieter abrufen</string>
+  <string name="setting_media_page_fetch_models_desc">Modelle aus der Modellliste des Anbieters auswählen</string>
+  <string name="setting_media_page_show_unrecognized">Weitere Modelle anzeigen (%1$d)</string>
+  <string name="setting_media_page_fetch_failed">Modelle konnten nicht abgerufen werden: %1$s</string>
+  <string name="setting_media_page_fetch_empty">Keine passenden Modelle</string>
+  <string name="setting_media_page_retry">Erneut versuchen</string>
   <string name="media_creation_page_last_frame_failed">Letztes Frame konnte nicht aus dem Video extrahiert werden</string>
   <string name="media_creation_page_asset_add_failed">Dieses Asset konnte nicht hinzugefügt werden</string>
   <string name="media_creation_page_no_video_model">Noch kein Video-Modell eingerichtet</string>

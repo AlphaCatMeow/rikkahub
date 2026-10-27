@@ -1447,6 +1447,8 @@
   <string name="media_creation_page_recent_outputs_empty">No generated results to reuse yet</string>
   <string name="media_creation_page_no_models">No models available yet. Add a media generation provider first.</string>
   <string name="media_creation_page_manage_providers">Manage providers</string>
+  <string name="media_creation_page_provider_settings">Provider settings</string>
+  <string name="media_creation_page_add_provider">Add provider</string>
   <string name="media_creation_page_params_title">Generation parameters</string>
   <string name="media_creation_page_params_reset">Reset all to default</string>
   <string name="media_creation_page_param_aspect_ratio">Aspect ratio</string>
@@ -1527,6 +1529,12 @@
   <string name="setting_media_page_models_desc">Model IDs are sent to the API as-is</string>
   <string name="setting_media_page_model_id">Model ID</string>
   <string name="setting_media_page_add_model">Add model</string>
+  <string name="setting_media_page_fetch_models">Fetch from provider</string>
+  <string name="setting_media_page_fetch_models_desc">Pick models from the provider's model list</string>
+  <string name="setting_media_page_show_unrecognized">Show other models (%1$d)</string>
+  <string name="setting_media_page_fetch_failed">Failed to fetch models: %1$s</string>
+  <string name="setting_media_page_fetch_empty">No matching models</string>
+  <string name="setting_media_page_retry">Retry</string>
   <string name="video_player_error">Unable to play this video</string>
   <string name="video_player_open_with">Open with another app</string>
   <string name="search_picker_off">Off</string>

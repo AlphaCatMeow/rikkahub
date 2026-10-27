@@ -3,6 +3,7 @@ package me.rerere.mediagen.provider
 import me.rerere.mediagen.model.MediaGenerationModel
 import me.rerere.mediagen.model.MediaGenerationRequest
 import me.rerere.mediagen.model.MediaGenerationTask
+import me.rerere.mediagen.model.RemoteMediaModel
 
 /**
  * 媒体生成供应商只负责任务的提交与查询，不在网络层内部隐式轮询。
@@ -11,6 +12,8 @@ import me.rerere.mediagen.model.MediaGenerationTask
  * 同步返回结果的接口（如 OpenAI 图像）在 [create] 里直接给出终态任务，无需实现 [query]。
  *
  * 模型的 kind 是否受支持由 [MediaGenerationManager] 按 [MediaGenerationProviderSetting.supportedKinds] 统一校验。
+ *
+ * 厂商有模型列表接口时覆盖 [supportsModelListing] 和 [listModels]；没有的只能由用户手动填写模型 ID。
  */
 interface MediaGenerationProvider<S : MediaGenerationProviderSetting> {
     val id: String
@@ -31,4 +34,10 @@ interface MediaGenerationProvider<S : MediaGenerationProviderSetting> {
                 "$id ${model.kind} generation returns results synchronously and has no task to query"
             )
         )
+
+    val supportsModelListing: Boolean get() = false
+
+    /** 只返回适配器支持的 kind 下的模型。 */
+    suspend fun listModels(setting: S): Result<List<RemoteMediaModel>> =
+        Result.failure(UnsupportedOperationException("$id does not provide a model list"))
 }

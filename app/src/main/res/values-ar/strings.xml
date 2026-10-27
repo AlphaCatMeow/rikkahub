@@ -1454,6 +1454,8 @@
   <string name="media_creation_page_recent_outputs_empty">لا توجد نتائج مولّدة لإعادة استخدامها بعد</string>
   <string name="media_creation_page_no_models">لا توجد نماذج متاحة بعد. أضف مزوّد توليد وسائط أولاً.</string>
   <string name="media_creation_page_manage_providers">إدارة المزوّدين</string>
+  <string name="media_creation_page_provider_settings">إعدادات المزوّدين</string>
+  <string name="media_creation_page_add_provider">إضافة مزوّد</string>
   <string name="media_creation_page_params_title">معلمات التوليد</string>
   <string name="media_creation_page_summary_watermark_off">بدون علامة مائية</string>
   <string name="media_creation_page_summary_prompt_enhancement_off">بدون تحسين المطالبة</string>
@@ -1487,6 +1489,12 @@
   <string name="setting_media_page_models_desc">تُرسَل معرّفات النماذج إلى API كما هي</string>
   <string name="setting_media_page_model_id">معرّف النموذج</string>
   <string name="setting_media_page_add_model">إضافة نموذج</string>
+  <string name="setting_media_page_fetch_models">جلب من المزوّد</string>
+  <string name="setting_media_page_fetch_models_desc">اختر النماذج من قائمة نماذج المزوّد</string>
+  <string name="setting_media_page_show_unrecognized">عرض النماذج الأخرى (%1$d)</string>
+  <string name="setting_media_page_fetch_failed">تعذّر جلب قائمة النماذج: %1$s</string>
+  <string name="setting_media_page_fetch_empty">لا توجد نماذج مطابقة</string>
+  <string name="setting_media_page_retry">إعادة المحاولة</string>
   <string name="media_creation_page_last_frame_failed">تعذّر استخراج الإطار الأخير من الفيديو</string>
   <string name="media_creation_page_asset_add_failed">تعذّر إضافة هذا الأصل</string>
   <string name="media_creation_page_no_video_model">لم يتم إعداد نموذج فيديو بعد</string>

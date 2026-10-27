@@ -9,6 +9,7 @@ import kotlinx.coroutines.withContext
 import me.rerere.mediagen.model.MediaGenerationModel
 import me.rerere.mediagen.model.MediaGenerationRequest
 import me.rerere.mediagen.model.MediaGenerationTask
+import me.rerere.mediagen.model.RemoteMediaModel
 import me.rerere.mediagen.provider.providers.aliyun.AliyunMediaGenerationProvider
 import me.rerere.mediagen.provider.providers.minimax.MiniMaxMediaGenerationProvider
 import me.rerere.mediagen.provider.providers.openai.OpenAIMediaGenerationProvider
@@ -41,6 +42,16 @@ class MediaGenerationManager(
         taskId: String,
     ): Result<MediaGenerationTask> = withContext(Dispatchers.Default) {
         unsupportedKind(setting, model) ?: provider(setting).queryUnsafe(setting, model, taskId)
+    }
+
+    fun supportsModelListing(setting: MediaGenerationProviderSetting): Boolean =
+        provider(setting).supportsModelListing
+
+    suspend fun listModels(
+        setting: MediaGenerationProviderSetting,
+    ): Result<List<RemoteMediaModel>> = withContext(Dispatchers.Default) {
+        provider(setting).listModelsUnsafe(setting)
+            .map { models -> models.filter { it.kind in setting.supportedKinds } }
     }
 
     /**
@@ -114,4 +125,10 @@ class MediaGenerationManager(
         taskId: String,
     ): Result<MediaGenerationTask> =
         (this as MediaGenerationProvider<MediaGenerationProviderSetting>).query(setting, model, taskId)
+
+    @Suppress("UNCHECKED_CAST")
+    private suspend fun MediaGenerationProvider<*>.listModelsUnsafe(
+        setting: MediaGenerationProviderSetting,
+    ): Result<List<RemoteMediaModel>> =
+        (this as MediaGenerationProvider<MediaGenerationProviderSetting>).listModels(setting)
 }

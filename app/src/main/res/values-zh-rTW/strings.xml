@@ -1404,6 +1404,8 @@
   <string name="media_creation_page_recent_outputs_empty">尚無可重複使用的生成結果</string>
   <string name="media_creation_page_no_models">尚無可用模型。請先新增媒體生成供應商。</string>
   <string name="media_creation_page_manage_providers">管理供應商</string>
+  <string name="media_creation_page_provider_settings">供應商設定</string>
+  <string name="media_creation_page_add_provider">新增供應商</string>
   <string name="media_creation_page_params_title">生成參數</string>
   <string name="media_creation_page_no_providers">尚未設定媒體生成供應商</string>
   <string name="media_creation_page_cancelled_task_running">已停止等待。任務可能仍在伺服器上執行。</string>
@@ -1477,6 +1479,12 @@
   <string name="setting_media_page_models_desc">模型 ID 會依原樣傳送至 API</string>
   <string name="setting_media_page_model_id">模型 ID</string>
   <string name="setting_media_page_add_model">新增模型</string>
+  <string name="setting_media_page_fetch_models">從供應商取得</string>
+  <string name="setting_media_page_fetch_models_desc">從供應商的模型清單中挑選模型</string>
+  <string name="setting_media_page_show_unrecognized">顯示其他模型（%1$d）</string>
+  <string name="setting_media_page_fetch_failed">取得模型清單失敗：%1$s</string>
+  <string name="setting_media_page_fetch_empty">沒有符合的模型</string>
+  <string name="setting_media_page_retry">重試</string>
   <string name="media_creation_page_last_frame_failed">無法從影片擷取最後一個影格</string>
   <string name="media_creation_page_asset_add_failed">無法新增此素材</string>
   <string name="media_creation_page_no_video_model">尚未設定影片模型</string>

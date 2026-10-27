@@ -1406,6 +1406,8 @@ mDNSアドレス: .localホスト名を使用し、IPを知らなくても同じ
   <string name="media_creation_page_recent_outputs_empty">再利用できる生成結果はまだありません</string>
   <string name="media_creation_page_no_models">利用可能なモデルがまだありません。先にメディア生成プロバイダーを追加してください。</string>
   <string name="media_creation_page_manage_providers">プロバイダーを管理</string>
+  <string name="media_creation_page_provider_settings">プロバイダー設定</string>
+  <string name="media_creation_page_add_provider">プロバイダーを追加</string>
   <string name="media_creation_page_params_title">生成パラメータ</string>
   <string name="media_creation_status_preparing">素材をアップロード中</string>
   <string name="media_creation_status_queued">待機中</string>
@@ -1488,6 +1490,12 @@ mDNSアドレス: .localホスト名を使用し、IPを知らなくても同じ
   <string name="setting_media_page_models_desc">モデルIDはそのままAPIに送信されます</string>
   <string name="setting_media_page_model_id">モデルID</string>
   <string name="setting_media_page_add_model">モデルを追加</string>
+  <string name="setting_media_page_fetch_models">プロバイダーから取得</string>
+  <string name="setting_media_page_fetch_models_desc">プロバイダーのモデル一覧から選択します</string>
+  <string name="setting_media_page_show_unrecognized">その他のモデルを表示（%1$d）</string>
+  <string name="setting_media_page_fetch_failed">モデル一覧の取得に失敗しました：%1$s</string>
+  <string name="setting_media_page_fetch_empty">一致するモデルがありません</string>
+  <string name="setting_media_page_retry">再試行</string>
   <string name="media_creation_error_interrupted">タスクが完了する前にアプリが終了しました</string>
   <string name="media_creation_error_provider_deleted">プロバイダー \"%1$s\" は削除されました</string>
   <string name="media_creation_error_no_output">APIが結果を返しませんでした</string>

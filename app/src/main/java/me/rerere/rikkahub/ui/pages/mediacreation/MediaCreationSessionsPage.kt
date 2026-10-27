@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -13,15 +14,19 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.toShape
@@ -45,6 +50,7 @@ import me.rerere.hugeicons.stroke.Add01
 import me.rerere.hugeicons.stroke.Delete01
 import me.rerere.hugeicons.stroke.ImageToVideo
 import me.rerere.hugeicons.stroke.PencilEdit01
+import me.rerere.hugeicons.stroke.Settings03
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.model.MediaCreationSession
@@ -57,6 +63,7 @@ import me.rerere.rikkahub.ui.theme.CustomColors
 import me.rerere.rikkahub.utils.plus
 import me.rerere.rikkahub.utils.toMessageTimeString
 import me.rerere.ui.components.RikkaConfirmDialog
+import me.rerere.ui.components.Tooltip
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
 import java.time.ZoneId
@@ -69,6 +76,7 @@ import kotlin.uuid.Uuid
 fun MediaCreationSessionsPage(vm: MediaCreationSessionsVM = koinViewModel()) {
     val navController = LocalNavController.current
     val sessions by vm.sessions.collectAsStateWithLifecycle()
+    val hasModels by vm.hasModels.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var renaming by remember { mutableStateOf<MediaCreationSession?>(null) }
     var deleting by remember { mutableStateOf<MediaCreationSession?>(null) }
@@ -85,6 +93,14 @@ fun MediaCreationSessionsPage(vm: MediaCreationSessionsVM = koinViewModel()) {
             LargeFlexibleTopAppBar(
                 title = { Text(stringResource(R.string.media_creation_title)) },
                 navigationIcon = { BackButton() },
+                actions = {
+                    val label = stringResource(R.string.media_creation_page_provider_settings)
+                    Tooltip(tooltip = { Text(label) }) {
+                        IconButton(onClick = { navController.navigate(Screen.SettingMedia) }) {
+                            Icon(HugeIcons.Settings03, contentDescription = label)
+                        }
+                    }
+                },
                 scrollBehavior = scrollBehavior,
                 colors = CustomColors.topBarColors,
             )
@@ -108,6 +124,16 @@ fun MediaCreationSessionsPage(vm: MediaCreationSessionsVM = koinViewModel()) {
             // 会话之间互不相关，各自一张卡片，不做成分组
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            // 没配模型时新建会话也生成不了，先把人引到供应商设置
+            if (hasModels == false) {
+                item(key = "setup") {
+                    SetupProvidersCard(
+                        onSetup = { navController.navigate(Screen.SettingMedia) },
+                        modifier = Modifier.animateItem(),
+                    )
+                }
+            }
+
             if (sessions?.isEmpty() == true) {
                 item {
                     EmptySessionsState(modifier = Modifier.fillParentMaxHeight(0.7f))
@@ -161,6 +187,31 @@ fun MediaCreationSessionsPage(vm: MediaCreationSessionsVM = koinViewModel()) {
                 session?.nodeCount ?: 0,
             )
         )
+    }
+}
+
+@Composable
+private fun SetupProvidersCard(onSetup: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer,
+    ) {
+        Row(
+            modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 12.dp, bottom = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(HugeIcons.Settings03, contentDescription = null)
+            Text(
+                text = stringResource(R.string.media_creation_page_no_models),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f),
+            )
+            FilledTonalButton(onClick = onSetup, shapes = ButtonDefaults.shapes()) {
+                Text(stringResource(R.string.media_creation_page_go_configure))
+            }
+        }
     }
 }
 

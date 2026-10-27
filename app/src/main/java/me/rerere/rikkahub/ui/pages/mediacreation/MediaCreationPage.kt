@@ -180,6 +180,14 @@ fun MediaCreationPage(id: String) {
                             }
                         }
                     }
+                    if (selectedNodes == null) {
+                        val label = stringResource(R.string.media_creation_page_provider_settings)
+                        Tooltip(tooltip = { Text(label) }) {
+                            IconButton(onClick = { navController.navigate(Screen.SettingMedia) }) {
+                                Icon(HugeIcons.Settings03, contentDescription = label)
+                            }
+                        }
+                    }
                 },
             )
         },

@@ -1,5 +1,6 @@
 package me.rerere.mediagen.provider.providers.openrouter
 
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.buildJsonObject
@@ -8,9 +9,12 @@ import me.rerere.mediagen.model.MediaGenerationModel
 import me.rerere.mediagen.model.MediaGenerationRequest
 import me.rerere.mediagen.model.MediaGenerationTask
 import me.rerere.mediagen.model.MediaKind
+import me.rerere.mediagen.model.RemoteMediaModel
 import me.rerere.mediagen.provider.MediaGenerationProvider
 import me.rerere.mediagen.provider.MediaGenerationProviderSetting
 import me.rerere.mediagen.provider.providers.bearerRequest
+import me.rerere.mediagen.provider.providers.executeJson
+import me.rerere.mediagen.provider.providers.string
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
@@ -18,7 +22,7 @@ import okhttp3.Request
  * OpenRouter：图像接口同步返回结果，视频是异步任务。两者都是 OpenRouter 自己的协议，不是 OpenAI 兼容的那一套。
  */
 class OpenRouterMediaGenerationProvider(
-    client: OkHttpClient,
+    private val client: OkHttpClient,
 ) : MediaGenerationProvider<MediaGenerationProviderSetting.OpenRouter> {
     override val id: String = PROVIDER_ID
 
@@ -43,6 +47,31 @@ class OpenRouterMediaGenerationProvider(
     ): Result<MediaGenerationTask> = when (model.kind) {
         MediaKind.IMAGE -> super.query(setting, model, taskId)
         MediaKind.VIDEO -> runCatching { video.query(setting, model, taskId) }
+    }
+
+    override val supportsModelListing: Boolean get() = true
+
+    // /models 能按产出类型过滤，图像和视频各查一次
+    override suspend fun listModels(
+        setting: MediaGenerationProviderSetting.OpenRouter,
+    ): Result<List<RemoteMediaModel>> = runCatching {
+        setting.supportedKinds.sorted().flatMap { kind ->
+            val modality = kind.name.lowercase()
+            val httpRequest = setting.request("/models?output_modalities=$modality").get().build()
+            parseModels(client.executeJson(httpRequest, id), kind)
+        }
+    }
+
+    internal fun parseModels(root: JsonObject, kind: MediaKind): List<RemoteMediaModel> {
+        val data = root["data"] as? JsonArray ?: error("OpenRouter model list does not contain data")
+        return data
+            .mapNotNull { element ->
+                val item = element as? JsonObject ?: return@mapNotNull null
+                val modelId = item.string("id")?.takeIf(String::isNotBlank) ?: return@mapNotNull null
+                RemoteMediaModel(modelId = modelId, kind = kind, displayName = item.string("name").orEmpty())
+            }
+            .distinctBy { it.modelId }
+            .sortedBy { it.modelId }
     }
 
     internal companion object {

@@ -45,6 +45,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.DropdownMenu
@@ -810,8 +811,19 @@ private fun ModelSheet(
             }
         }
 
-        TextButton(onClick = onManage, modifier = Modifier.align(Alignment.End)) {
-            Text(stringResource(R.string.media_creation_page_manage_providers))
+        // 没有可用模型时这是唯一能做的事，换成主按钮
+        if (groups.isEmpty()) {
+            Button(
+                onClick = onManage,
+                shapes = ButtonDefaults.shapes(),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.media_creation_page_add_provider))
+            }
+        } else {
+            TextButton(onClick = onManage, modifier = Modifier.align(Alignment.End)) {
+                Text(stringResource(R.string.media_creation_page_manage_providers))
+            }
         }
     }
 }
