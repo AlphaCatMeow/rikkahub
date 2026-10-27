@@ -1530,7 +1530,7 @@
   <string name="setting_media_page_model_id">Model ID</string>
   <string name="setting_media_page_add_model">Add model</string>
   <string name="setting_media_page_fetch_models">Fetch from provider</string>
-  <string name="setting_media_page_fetch_models_desc">Pick models from the provider's model list</string>
+  <string name="setting_media_page_fetch_models_desc">Pick models from the provider\'s model list</string>
   <string name="setting_media_page_show_unrecognized">Show other models (%1$d)</string>
   <string name="setting_media_page_fetch_failed">Failed to fetch models: %1$s</string>
   <string name="setting_media_page_fetch_empty">No matching models</string>
