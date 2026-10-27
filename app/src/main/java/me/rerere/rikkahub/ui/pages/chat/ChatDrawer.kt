@@ -64,7 +64,6 @@ import me.rerere.hugeicons.stroke.FolderAdd
 import me.rerere.hugeicons.stroke.ImageToVideo
 import me.rerere.hugeicons.stroke.InLove
 import me.rerere.hugeicons.stroke.LanguageCircle
-import me.rerere.hugeicons.stroke.LookTop
 import me.rerere.hugeicons.stroke.PencilEdit01
 import me.rerere.hugeicons.stroke.Search01
 import me.rerere.hugeicons.stroke.Settings03
@@ -346,49 +345,32 @@ fun ChatDrawerContent(
                 )
             }
 
-            // 助手选择器
-            AssistantPicker(
-                settings = settings,
-                onSelectAssistant = { assistant ->
-                    val updateJob = vm.updateSettings { it.copy(assistantId = assistant.id) }
-                    scope.launch {
-                        updateJob.join()
-                        val id = if (context.readBooleanPreference("create_new_conversation_on_start", true)) {
-                            Uuid.random()
-                        } else {
-                            repo.getConversationsOfAssistant(assistant.id)
-                                .first()
-                                .firstOrNull()
-                                ?.id ?: Uuid.random()
-                        }
-                        navigateToChatPage(navigator = navController, chatId = id)
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                onClickSetting = {
-                    val currentAssistantId = settings.assistantId
-                    navController.navigate(Screen.AssistantDetail(id = currentAssistantId.toString()))
-                }
-            )
-
             Row(
-                horizontalArrangement = Arrangement.SpaceAround,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp)
             ) {
-                DrawerAction(
-                    icon = {
-                        Icon(
-                            imageVector = HugeIcons.LookTop,
-                            contentDescription = stringResource(R.string.assistant_page_title)
-                        )
+                AssistantPicker(
+                    settings = settings,
+                    onSelectAssistant = { assistant ->
+                        val updateJob = vm.updateSettings { it.copy(assistantId = assistant.id) }
+                        scope.launch {
+                            updateJob.join()
+                            val id = if (context.readBooleanPreference("create_new_conversation_on_start", true)) {
+                                Uuid.random()
+                            } else {
+                                repo.getConversationsOfAssistant(assistant.id)
+                                    .first()
+                                    .firstOrNull()
+                                    ?.id ?: Uuid.random()
+                            }
+                            navigateToChatPage(navigator = navController, chatId = id)
+                        }
                     },
-                    label = {
-                        Text(stringResource(R.string.assistant_page_title))
-                    },
-                    onClick = {
+                    modifier = Modifier.weight(1f),
+                    onClickSetting = {
                         navController.navigate(Screen.Assistant)
                     },
                 )
@@ -416,8 +398,6 @@ fun ChatDrawerContent(
                         navController.navigate(Screen.Stats)
                     },
                 )
-
-                Spacer(Modifier.weight(1f))
 
                 DrawerAction(
                     icon = {
