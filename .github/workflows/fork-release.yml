@@ -1,0 +1,121 @@
+name: Fork Release
+
+# Fork 正式版：推送 fork-v* 标签时构建 release 包并发布 Release。
+# 包名改成 me.rerere.rikkahub.fork、桌面名称改成「RikkaHub Fork」，和官方版共存，不会覆盖。
+# 签名用 Fork 仓 Secrets 里的固定密钥（FORK_KEY_BASE64 / FORK_SIGNING_CONFIG），新版本可以直接覆盖升级旧的 Fork 版。
+on:
+  push:
+    tags:
+      - 'fork-v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # 发布 Release 需要写权限
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'jetbrains'
+          java-version: '21'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # web 模块的 preBuild 会执行 `pnpm run build` 构建前端
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web-ui/pnpm-lock.yaml
+
+      - name: Install web-ui dependencies
+        working-directory: web-ui
+        run: pnpm install --frozen-lockfile
+
+      - name: Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+
+      - name: Prepare build files
+        env:
+          FORK_KEY_BASE64: ${{ secrets.FORK_KEY_BASE64 }}
+          FORK_SIGNING_CONFIG: ${{ secrets.FORK_SIGNING_CONFIG }}
+        run: |
+          # 签名密钥和签名配置
+          printf '%s' "$FORK_KEY_BASE64" | base64 -d > app/app.key
+          printf '%s\n' "$FORK_SIGNING_CONFIG" > local.properties
+
+          # 包名和桌面名称与官方版区分开
+          sed -i 's/applicationId = "me.rerere.rikkahub"/applicationId = "me.rerere.rikkahub.fork"/' app/build.gradle.kts
+          grep -n 'applicationId = "me.rerere.rikkahub.fork"' app/build.gradle.kts
+          sed -i '0,/android:label="@string\/app_name"/s//android:label="RikkaHub Fork"/' app/src/main/AndroidManifest.xml
+          grep -n 'RikkaHub Fork' app/src/main/AndroidManifest.xml
+
+          # 不接入真实的 Firebase：google-services 插件要求有配置文件，这里放一份占位配置
+          cat > app/google-services.json <<'EOF'
+          {
+            "project_info": {
+              "project_number": "000000000000",
+              "project_id": "rikkahub-fork",
+              "storage_bucket": "rikkahub-fork.appspot.com"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
+                  "android_client_info": { "package_name": "me.rerere.rikkahub.fork" }
+                },
+                "oauth_client": [],
+                "api_key": [{ "current_key": "AIzaSyA0000000000000000000000000000000" }],
+                "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
+              }
+            ],
+            "configuration_version": "1"
+          }
+          EOF
+
+      - name: Unit tests
+        run: |
+          chmod +x gradlew
+          ./gradlew :mediagen:testDebugUnitTest
+
+      - name: Gradle Build
+        run: ./gradlew assembleGithubRelease
+
+      # 确认 APK 确实用 Fork 密钥签了名（签名配置缺失时 release 包会是未签名的）
+      - name: Verify signature
+        run: |
+          APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          for apk in app/build/outputs/apk/github/release/*.apk; do
+            "$APKSIGNER" verify --print-certs "$apk" | grep -m1 'SHA-256'
+          done
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: RikkaHub Fork ${{ github.ref_name }}
+          make_latest: true
+          body: |
+            Fork 正式版（commit `${{ github.sha }}`）
+
+            包名 `me.rerere.rikkahub.fork`，桌面名称「RikkaHub Fork」，可与官方版共存，数据互不相通。
+            之后的 Fork 版本使用同一签名，可以直接覆盖升级。
+          files: |
+            app/build/outputs/apk/github/release/*.apk
+            app/build/outputs/mapping/githubRelease/mapping.txt
