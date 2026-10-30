@@ -15,6 +15,9 @@ enum class MediaGenerationParameter {
     /** [MediaGenerationRequest.aspectRatio]：宽高比（`16:9`），部分接口还接受 `adaptive`。 */
     ASPECT_RATIO,
 
+    /** [MediaGenerationRequest.quality]：图像质量档位（`low`、`high`），取值由厂商决定。 */
+    QUALITY,
+
     /** [MediaGenerationRequest.durationSeconds]：视频时长，`-1` 表示交给模型决定。 */
     DURATION,
 
@@ -85,16 +88,24 @@ fun MediaGenerationProviderSetting.capabilities(kind: MediaKind): MediaGeneratio
 private val REFERENCE_ONLY = setOf(ImageRole.REFERENCE)
 private val ALL_IMAGE_ROLES = ImageRole.entries.toSet()
 
+// 比例按档位换算成 size 下发（Grok 走 aspect_ratio），见 OpenAIMediaGenerationProvider
 private val OPENAI_IMAGE = MediaGenerationCapabilities(
-    parameters = setOf(MediaGenerationParameter.COUNT, MediaGenerationParameter.RESOLUTION),
+    parameters = setOf(
+        MediaGenerationParameter.COUNT,
+        MediaGenerationParameter.RESOLUTION,
+        MediaGenerationParameter.ASPECT_RATIO,
+        MediaGenerationParameter.QUALITY,
+    ),
     imageRoles = REFERENCE_ONLY,
     requiresPrompt = true,
 )
 
+// 接口没有比例字段，比例换算成像素尺寸后放进 size
 private val ALIYUN_IMAGE = MediaGenerationCapabilities(
     parameters = setOf(
         MediaGenerationParameter.COUNT,
         MediaGenerationParameter.RESOLUTION,
+        MediaGenerationParameter.ASPECT_RATIO,
         MediaGenerationParameter.WATERMARK,
         MediaGenerationParameter.SEED,
         MediaGenerationParameter.PROMPT_ENHANCEMENT,
@@ -119,8 +130,13 @@ private val ALIYUN_VIDEO = MediaGenerationCapabilities(
     requiresRemoteInputs = true,
 )
 
+// 接口没有比例字段，比例换算成像素尺寸后放进 size
 private val VOLCENGINE_IMAGE = MediaGenerationCapabilities(
-    parameters = setOf(MediaGenerationParameter.RESOLUTION, MediaGenerationParameter.WATERMARK),
+    parameters = setOf(
+        MediaGenerationParameter.RESOLUTION,
+        MediaGenerationParameter.ASPECT_RATIO,
+        MediaGenerationParameter.WATERMARK,
+    ),
     imageRoles = REFERENCE_ONLY,
     // 只有图层拆分可以不带提示词，而它要通过 extraParameters 开启
     requiresPrompt = true,
@@ -166,6 +182,7 @@ private val OPENROUTER_IMAGE = MediaGenerationCapabilities(
         MediaGenerationParameter.COUNT,
         MediaGenerationParameter.RESOLUTION,
         MediaGenerationParameter.ASPECT_RATIO,
+        MediaGenerationParameter.QUALITY,
         MediaGenerationParameter.SEED,
     ),
     imageRoles = REFERENCE_ONLY,

@@ -60,6 +60,7 @@ class MediaGenerationCapabilitiesTest {
         MediaGenerationParameter.COUNT -> MediaGenerationRequest(prompt = "cat", count = 2)
         MediaGenerationParameter.RESOLUTION -> MediaGenerationRequest(prompt = "cat", resolution = "1024x1024")
         MediaGenerationParameter.ASPECT_RATIO -> MediaGenerationRequest(prompt = "cat", aspectRatio = "16:9")
+        MediaGenerationParameter.QUALITY -> MediaGenerationRequest(prompt = "cat", quality = "high")
         MediaGenerationParameter.DURATION -> MediaGenerationRequest(prompt = "cat", durationSeconds = 5)
         MediaGenerationParameter.GENERATE_AUDIO -> MediaGenerationRequest(prompt = "cat", generateAudio = true)
         MediaGenerationParameter.WATERMARK -> MediaGenerationRequest(prompt = "cat", watermark = false)

@@ -73,7 +73,8 @@ internal class VolcengineVideoGeneration(
                             put("type", "image_url")
                             put("image_url", buildJsonObject { put("url", input.url) })
                             put(
-                                "role", when (input.role) {
+                                "role",
+                                when (input.role) {
                                     ImageRole.FIRST_FRAME -> "first_frame"
                                     ImageRole.LAST_FRAME -> "last_frame"
                                     ImageRole.REFERENCE -> "reference_image"
@@ -110,6 +111,7 @@ internal class VolcengineVideoGeneration(
         request.watermark?.let { put("watermark", it) }
         request.seed?.let { put("seed", it) }
         require(request.count == null || request.count == 1) { "Volcengine generates one video per task" }
+        require(request.quality == null) { "Volcengine video generation does not expose quality" }
         require(request.promptEnhancement == null) {
             "Volcengine does not expose prompt enhancement in the video generation API"
         }

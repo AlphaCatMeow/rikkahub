@@ -1792,4 +1792,18 @@
   <string name="setting_model_page_memory_model">Erinnerungskonsolidierungsmodell</string>
   <string name="setting_model_page_memory_model_desc">Modell, das Konversationen im Hintergrund in langfristige Erinnerungen organisiert; verwendet das schnelle Modell, wenn nicht festgelegt</string>
   <string name="setting_model_page_memory_model_follow_fast">Wie das schnelle Modell</string>
+  <string name="drawer_section_chat">Chat</string>
+  <string name="drawer_section_image">Bilder</string>
+  <string name="drawer_section_translation">Übersetzen</string>
+  <string name="drawer_new_chat">Neuer Chat</string>
+  <string name="drawer_new_image">Neues Bild</string>
+  <string name="drawer_new_translation">Neue Übersetzung</string>
+  <string name="drawer_folder_unfiled">Ohne Ordner</string>
+  <string name="drawer_empty_images">Noch keine Bildsitzungen</string>
+  <string name="drawer_empty_translations">Noch keine Übersetzungen</string>
+  <string name="drawer_load_failed_retry">Laden fehlgeschlagen. Tippen zum Wiederholen</string>
+  <string name="drawer_delete_translation_confirm">Diesen Übersetzungseintrag löschen?</string>
+  <string name="media_creation_page_param_quality">Qualität</string>
+  <string name="media_creation_page_param_quality_hint">z. B. high</string>
+  <string name="media_creation_page_summary_quality">Qualität %1$s</string>
 </resources>

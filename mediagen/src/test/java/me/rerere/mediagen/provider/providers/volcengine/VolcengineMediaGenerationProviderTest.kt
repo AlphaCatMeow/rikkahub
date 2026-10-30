@@ -90,17 +90,44 @@ class VolcengineMediaGenerationProviderTest {
     }
 
     @Test
+    fun volcengineConvertsAspectRatioToPixelSize() {
+        val generation = VolcengineImageGeneration(client)
+        fun size(request: MediaGenerationRequest) = generation.buildBody(seedream, request)["size"]
+
+        // 不给档位时按 2K 换算
+        assertEquals(JsonPrimitive("2720x1536"), size(MediaGenerationRequest(prompt = "cat", aspectRatio = "16:9")))
+        assertEquals(
+            JsonPrimitive("1024x1024"),
+            size(MediaGenerationRequest(prompt = "cat", resolution = "1K", aspectRatio = "1:1"))
+        )
+        assertEquals(JsonPrimitive("4K"), size(MediaGenerationRequest(prompt = "cat", resolution = "4K")))
+        assertEquals(
+            JsonPrimitive("2K"),
+            size(MediaGenerationRequest(prompt = "cat", resolution = "2K", aspectRatio = "adaptive"))
+        )
+    }
+
+    @Test
     fun volcengineRejectsFieldsTheImageApiDoesNotExpose() {
         val generation = VolcengineImageGeneration(client)
         fun body(request: MediaGenerationRequest) = generation.buildBody(seedream, request)
 
         assertThrows(IllegalArgumentException::class.java) { body(MediaGenerationRequest(prompt = "cat", count = 4)) }
         assertThrows(IllegalArgumentException::class.java) { body(MediaGenerationRequest(prompt = "cat", seed = 1)) }
+        assertThrows(
+            IllegalArgumentException::class.java
+        ) { body(MediaGenerationRequest(prompt = "cat", quality = "high")) }
+        // 像素尺寸已经决定了比例
         assertThrows(IllegalArgumentException::class.java) {
-            body(MediaGenerationRequest(prompt = "cat", aspectRatio = "16:9"))
+            body(MediaGenerationRequest(prompt = "cat", resolution = "2048x2048", aspectRatio = "16:9"))
         }
         assertThrows(IllegalArgumentException::class.java) {
-            body(MediaGenerationRequest(prompt = "cat", inputs = listOf(MediaGenerationInput.Video("https://e.com/a.mp4"))))
+            body(
+                MediaGenerationRequest(
+                    prompt = "cat",
+                    inputs = listOf(MediaGenerationInput.Video("https://e.com/a.mp4"))
+                )
+            )
         }
         assertThrows(IllegalArgumentException::class.java) {
             body(MediaGenerationRequest(prompt = "cat", inputs = listOf(MediaGenerationInput.Image("/not/exist.png"))))
@@ -166,10 +193,16 @@ class VolcengineMediaGenerationProviderTest {
             if (request.url.encodedPath.endsWith("/images/generations")) {
                 jsonResponse(request, """{"data":[{"url":"https://tos.example.com/a.png","size":"2048x2048"}]}""")
             } else {
-                jsonResponse(request, """{"id":"cgt-1","status":"succeeded","content":{"video_url":"https://e.com/a.mp4"}}""")
+                jsonResponse(
+                    request,
+                    """{"id":"cgt-1","status":"succeeded","content":{"video_url":"https://e.com/a.mp4"}}"""
+                )
             }
         })
-        val setting = MediaGenerationProviderSetting.Volcengine(apiKey = "key", baseUrl = "https://ark.example.com/api/v3/")
+        val setting = MediaGenerationProviderSetting.Volcengine(
+            apiKey = "key",
+            baseUrl = "https://ark.example.com/api/v3/"
+        )
         val video = MediaGenerationModel(modelId = "doubao-seedance-2-0-260128", kind = MediaKind.VIDEO)
 
         assertEquals(setOf(MediaKind.IMAGE, MediaKind.VIDEO), setting.supportedKinds)

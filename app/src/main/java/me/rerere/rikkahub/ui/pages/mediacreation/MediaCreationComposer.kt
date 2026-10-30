@@ -943,6 +943,16 @@ private fun ParamsSheet(
                     onValueChange = { update(current.copy(resolution = it)) },
                 )
             }
+            if (MediaGenerationParameter.QUALITY in supported) {
+                TextParam(
+                    label = stringResource(R.string.media_creation_page_param_quality),
+                    value = current.quality,
+                    presets = presets.qualities,
+                    default = defaults.quality.takeIf { MediaGenerationParameter.QUALITY in required },
+                    placeholder = stringResource(R.string.media_creation_page_param_quality_hint),
+                    onValueChange = { update(current.copy(quality = it)) },
+                )
+            }
             if (MediaGenerationParameter.DURATION in supported) {
                 NumberParam(
                     label = stringResource(R.string.media_creation_page_param_duration),

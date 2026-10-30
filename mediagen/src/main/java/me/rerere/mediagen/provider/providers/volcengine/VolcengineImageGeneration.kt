@@ -17,6 +17,7 @@ import me.rerere.mediagen.model.MediaGenerationTask
 import me.rerere.mediagen.model.MediaGenerationUsage
 import me.rerere.mediagen.provider.MediaGenerationProviderSetting
 import me.rerere.mediagen.provider.providers.bearerRequest
+import me.rerere.mediagen.provider.providers.combineImageSize
 import me.rerere.mediagen.provider.providers.executeJson
 import me.rerere.mediagen.provider.providers.imageMimeType
 import me.rerere.mediagen.provider.providers.long
@@ -69,7 +70,9 @@ internal class VolcengineImageGeneration(
             1 -> put("image", images.single())
             else -> put("image", JsonArray(images))
         }
-        request.resolution?.takeIf(String::isNotBlank)?.let { put("size", it) }
+        // 接口没有比例字段，比例要换算成像素尺寸；不给档位时按默认的 2K 换算
+        combineImageSize(request.resolution, request.aspectRatio, defaultEdge = 2048, provider = "Volcengine")
+            ?.let { put("size", it) }
         request.watermark?.let { put("watermark", it) }
     }
 
@@ -116,9 +119,7 @@ internal class VolcengineImageGeneration(
         require(request.count == null || request.count == 1) {
             "Volcengine generates one image per request; use sequential_image_generation in extraParameters for image sets"
         }
-        require(request.aspectRatio == null) {
-            "Volcengine image generation takes the aspect ratio from the prompt or a pixel resolution"
-        }
+        require(request.quality == null) { "Volcengine image generation does not expose quality" }
         require(request.durationSeconds == null) { "Volcengine image generation does not expose duration" }
         require(request.generateAudio == null) { "Volcengine image generation does not expose generateAudio" }
         require(request.seed == null) { "Volcengine image generation does not expose seed" }

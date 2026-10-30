@@ -77,11 +77,12 @@ internal val MediaCreationStatus.label: String
 /** 时长的特殊取值：交给模型决定（智能时长）。 */
 internal const val AUTO_DURATION = -1
 
-/** 用户改过的参数，按「比例 · 分辨率 · 时长 · 数量」的顺序列出；都没改时为空。 */
+/** 用户改过的参数，按「比例 · 分辨率 · 质量 · 时长 · 数量」的顺序列出；都没改时为空。 */
 @Composable
 internal fun MediaCreationParams.summary(kind: MediaKind): List<String> = listOfNotNull(
     aspectRatio,
     resolution,
+    quality?.let { stringResource(R.string.media_creation_page_summary_quality, it) },
     durationSeconds?.let {
         if (it == AUTO_DURATION) {
             stringResource(R.string.media_creation_page_summary_auto_duration)
@@ -129,6 +130,7 @@ internal fun MediaCreationParams.summary(kind: MediaKind): List<String> = listOf
 internal data class MediaCreationPresets(
     val resolutions: List<String> = emptyList(),
     val aspectRatios: List<String> = emptyList(),
+    val qualities: List<String> = emptyList(),
     val durations: List<Int> = emptyList(),
     val counts: List<Int> = emptyList(),
 ) {
@@ -138,19 +140,28 @@ internal data class MediaCreationPresets(
             count = counts.firstOrNull(),
             resolution = resolutions.firstOrNull(),
             aspectRatio = aspectRatios.firstOrNull(),
+            quality = qualities.firstOrNull(),
             durationSeconds = durations.firstOrNull(),
         )
 }
 
 internal fun MediaGenerationProviderSetting.presets(kind: MediaKind): MediaCreationPresets = when (this) {
+    // gpt-image-1 / 1.5 只接受前三个尺寸；gpt-image-2 起接受 16 倍数的任意尺寸，最大 3840x2160。
+    // 选了比例时，档位会按比例换算成像素尺寸；dall-e-3 的质量是 standard / hd，可以手动输入
     is MediaGenerationProviderSetting.OpenAI -> MediaCreationPresets(
-        resolutions = listOf("1024x1024", "1536x1024", "1024x1536"),
+        resolutions = listOf("1024x1024", "1536x1024", "1024x1536", "1K", "2K", "2048x2048", "3840x2160", "2160x3840"),
+        aspectRatios = IMAGE_ASPECT_RATIOS,
+        qualities = listOf("auto", "low", "medium", "high"),
         counts = IMAGE_COUNTS,
     )
 
     is MediaGenerationProviderSetting.Volcengine -> when (kind) {
         // 各代 Seedream 的档位不同：5.0 pro / flash 是 1K、1.5K、2K，5.0 lite 是 2K、3K、4K，4.5 是 2K、4K
-        MediaKind.IMAGE -> MediaCreationPresets(resolutions = listOf("1K", "1.5K", "2K", "3K", "4K"))
+        // 选了比例时，档位会按比例换算成像素尺寸，不选档位按 2K 换算
+        MediaKind.IMAGE -> MediaCreationPresets(
+            resolutions = listOf("1K", "1.5K", "2K", "3K", "4K"),
+            aspectRatios = IMAGE_ASPECT_RATIOS,
+        )
         // 智能时长是 Seedance 2.0 起才有的
         MediaKind.VIDEO -> MediaCreationPresets(
             resolutions = listOf("480p", "720p", "1080p"),
@@ -160,9 +171,11 @@ internal fun MediaGenerationProviderSetting.presets(kind: MediaKind): MediaCreat
     }
 
     is MediaGenerationProviderSetting.Aliyun -> when (kind) {
-        // 千问 3.0 的 size 只接受像素尺寸，万相 2.7 另外还接受 1K、2K 档位
+        // 千问 3.0 的 size 只接受像素尺寸，万相 2.7 另外还接受 1K、2K 档位；
+        // 选了比例时，档位会按比例换算成像素尺寸，不选档位按 1280*1280 的总像素换算
         MediaKind.IMAGE -> MediaCreationPresets(
-            resolutions = listOf("1024x1024", "1536x1024", "1024x1536", "2048x2048"),
+            resolutions = listOf("1K", "2K", "1024x1024", "1536x1024", "1024x1536", "1280x720", "720x1280", "2048x2048"),
+            aspectRatios = IMAGE_ASPECT_RATIOS,
             counts = IMAGE_COUNTS,
         )
         MediaKind.VIDEO -> MediaCreationPresets(
@@ -181,9 +194,12 @@ internal fun MediaGenerationProviderSetting.presets(kind: MediaKind): MediaCreat
 
     // 背后是各家的模型，取值取的是多数模型都接受的那些
     is MediaGenerationProviderSetting.OpenRouter -> when (kind) {
+        // 512、768 和 1:4、1:8 这类比例只有少数模型支持
         MediaKind.IMAGE -> MediaCreationPresets(
-            resolutions = listOf("1K", "2K", "4K"),
-            aspectRatios = listOf("1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"),
+            resolutions = listOf("1K", "2K", "4K", "512", "768", "1.5K"),
+            aspectRatios = listOf("auto") + IMAGE_ASPECT_RATIOS +
+                listOf("2:1", "1:2", "9:21", "4:1", "1:4", "8:1", "1:8"),
+            qualities = listOf("auto", "low", "medium", "high"),
             counts = IMAGE_COUNTS,
         )
 
@@ -196,6 +212,7 @@ internal fun MediaGenerationProviderSetting.presets(kind: MediaKind): MediaCreat
 }
 
 private val IMAGE_COUNTS = listOf(1, 2, 3, 4)
+private val IMAGE_ASPECT_RATIOS = listOf("1:1", "4:3", "3:4", "3:2", "2:3", "16:9", "9:16", "5:4", "4:5", "21:9")
 private val VIDEO_ASPECT_RATIOS = listOf("16:9", "9:16", "1:1", "4:3", "3:4", "21:9")
 private val VIDEO_DURATIONS = listOf(5, 10)
 

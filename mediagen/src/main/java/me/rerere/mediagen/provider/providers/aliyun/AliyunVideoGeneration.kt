@@ -69,7 +69,8 @@ internal class AliyunVideoGeneration(
                             when (input) {
                                 is MediaGenerationInput.Image -> {
                                     put(
-                                        "type", when (input.role) {
+                                        "type",
+                                        when (input.role) {
                                             ImageRole.FIRST_FRAME -> "first_frame"
                                             ImageRole.LAST_FRAME -> "last_frame"
                                             ImageRole.REFERENCE -> "reference_image"
@@ -117,6 +118,7 @@ internal class AliyunVideoGeneration(
             request.promptEnhancement?.let { put("prompt_extend", it) }
         })
         require(request.count == null || request.count == 1) { "Aliyun generates one video per task" }
+        require(request.quality == null) { "Aliyun video generation does not expose quality" }
         require(request.callbackUrl == null) {
             "Aliyun uses account-level asynchronous callbacks instead of a callback_url request field"
         }

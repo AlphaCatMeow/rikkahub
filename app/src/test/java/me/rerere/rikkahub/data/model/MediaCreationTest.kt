@@ -28,6 +28,7 @@ class MediaCreationTest {
             count = 2,
             resolution = "1536x1024",
             aspectRatio = "16:9",
+            quality = "high",
             durationSeconds = 5,
             generateAudio = true,
             watermark = false,
@@ -35,7 +36,10 @@ class MediaCreationTest {
             promptEnhancement = true,
         )
 
-        assertEquals(MediaCreationParams(count = 2, resolution = "1536x1024"), params.supportedBy(openAIImage))
+        assertEquals(
+            MediaCreationParams(count = 2, resolution = "1536x1024", aspectRatio = "16:9", quality = "high"),
+            params.supportedBy(openAIImage),
+        )
         assertEquals(
             MediaCreationParams(
                 resolution = "1536x1024",
@@ -146,7 +150,12 @@ class MediaCreationTest {
     fun `request maps assets to inputs and drops unsupported params`() {
         val request = buildMediaGenerationRequest(
             prompt = "镜头缓慢推近",
-            params = MediaCreationParams(count = 2, resolution = "1080p", durationSeconds = 5, promptEnhancement = true),
+            params = MediaCreationParams(
+                count = 2,
+                resolution = "1080p",
+                durationSeconds = 5,
+                promptEnhancement = true
+            ),
             assets = listOf(image("media/first.png", ImageRole.FIRST_FRAME), video("media/clip.mp4")),
             inputUrls = listOf("https://s3.example.com/first.png", "https://s3.example.com/clip.mp4"),
             capabilities = volcengineVideo,

@@ -9,12 +9,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -80,6 +81,8 @@ import me.rerere.rikkahub.data.repository.ConversationRepository
 import me.rerere.rikkahub.ui.components.ai.AssistantPicker
 import me.rerere.rikkahub.ui.pages.mediacreation.MediaCreationSessionsVM
 import me.rerere.rikkahub.ui.components.ui.BackupReminderCard
+import me.rerere.rikkahub.ui.components.ui.ConnectedChoiceButtons
+import me.rerere.rikkahub.ui.components.ui.ConnectedChoiceLabel
 import me.rerere.rikkahub.ui.components.ui.Greeting
 import me.rerere.rikkahub.ui.components.ui.UIAvatar
 import me.rerere.rikkahub.ui.components.ui.UpdateCard
@@ -112,6 +115,7 @@ fun ChatDrawerContent(
 
     val activity = context as ComponentActivity
     val drawerVm: ChatDrawerVM = koinViewModel(viewModelStoreOwner = activity)
+    val mediaVm: MediaCreationSessionsVM = koinViewModel(viewModelStoreOwner = activity)
     var section by rememberSaveable { mutableStateOf(DrawerSection.CHAT) }
     var autoScrollToCurrent by remember(current.id) { mutableStateOf(true) }
     val mediaListState = rememberLazyListState()
@@ -264,28 +268,38 @@ fun ChatDrawerContent(
                 }
             }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                FolderBar(
-                    folders = folders,
-                    selectedFolderId = selectedFolderId,
-                    section = section,
-                    onSectionChange = {
-                        if (it != DrawerSection.CHAT) autoScrollToCurrent = false
-                        section = it
-                    },
-                    onSelect = { drawerVm.selectFolder(it) },
-                    onRename = { folderToRename = it },
-                    onDelete = { folderToDelete = it },
-                    modifier = Modifier.weight(1f),
-                )
+            ConnectedChoiceButtons(
+                options = DrawerSection.entries,
+                selected = section,
+                onSelect = {
+                    if (it != DrawerSection.CHAT) autoScrollToCurrent = false
+                    section = it
+                },
+                minHeight = 40.dp,
+                modifier = Modifier.padding(horizontal = 4.dp),
+            ) { option, selected ->
+                ConnectedChoiceLabel(text = option.label, selected = selected, icon = option.icon)
+            }
 
-                if (section == DrawerSection.CHAT) {
+            // 三个分区的操作栏高度相同，切换时列表不会上下跳动
+            when (section) {
+                DrawerSection.CHAT -> DrawerSectionBar(
+                    newLabel = stringResource(R.string.drawer_new_chat),
+                    onNew = { navigateToChatPage(navController) },
+                    modifier = Modifier.padding(horizontal = 4.dp),
+                    // 没有文件夹时只剩「未归类」一项，没有筛选的意义
+                    filters = if (folders.isEmpty()) null else {
+                        {
+                            folderFilters(
+                                folders = folders,
+                                selectedFolderId = selectedFolderId,
+                                onSelect = { drawerVm.selectFolder(it) },
+                                onRename = { folderToRename = it },
+                                onDelete = { folderToDelete = it },
+                            )
+                        }
+                    },
+                ) {
                     ConversationSortButton(
                         sortOrder = settings.displaySetting.conversationSortOrder,
                         onSortOrderChange = { sortOrder ->
@@ -301,6 +315,28 @@ fun ChatDrawerContent(
                         },
                     )
                 }
+
+                DrawerSection.IMAGE -> DrawerSectionBar(
+                    newLabel = stringResource(R.string.drawer_new_image),
+                    onNew = {
+                        mediaVm.newSession { id ->
+                            navController.navigate(Screen.MediaCreation(id.toString())) { launchSingleTop = true }
+                        }
+                    },
+                    modifier = Modifier.padding(horizontal = 4.dp),
+                ) {
+                    DrawerToolButton(
+                        icon = HugeIcons.Settings03,
+                        contentDescription = stringResource(R.string.media_creation_page_provider_settings),
+                        onClick = { navController.navigate(Screen.SettingMedia) },
+                    )
+                }
+
+                DrawerSection.TRANSLATION -> DrawerSectionBar(
+                    newLabel = stringResource(R.string.drawer_new_translation),
+                    onNew = { navController.navigate(Screen.Translator) },
+                    modifier = Modifier.padding(horizontal = 4.dp),
+                )
             }
         }
     }
@@ -355,7 +391,6 @@ fun ChatDrawerContent(
                     }
                 )
                 DrawerSection.IMAGE -> {
-                    val mediaVm: MediaCreationSessionsVM = koinViewModel(viewModelStoreOwner = activity)
                     val sessions by mediaVm.sessions.collectAsStateWithLifecycle()
                     MediaDrawerList(
                         sessions = sessions,
@@ -751,77 +786,52 @@ private fun DrawerAction(
     }
 }
 
-@Composable
-private fun FolderBar(
+// 聊天分区操作栏里的文件夹筛选：「未归类」加上各个文件夹，长按文件夹可以重命名或删除
+private fun LazyListScope.folderFilters(
     folders: List<Folder>,
     selectedFolderId: Uuid?,
-    section: DrawerSection,
-    onSectionChange: (DrawerSection) -> Unit,
     onSelect: (Uuid?) -> Unit,
     onRename: (Folder) -> Unit,
     onDelete: (Folder) -> Unit,
-    modifier: Modifier = Modifier,
 ) {
-    LazyRow(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        item {
+    item(key = "unfiled") {
+        FolderChip(
+            label = stringResource(R.string.drawer_folder_unfiled),
+            selected = selectedFolderId == null,
+            onClick = { onSelect(null) },
+            onLongClick = {},
+        )
+    }
+    items(folders, key = { it.id.toString() }) { folder ->
+        var menuExpanded by remember { mutableStateOf(false) }
+        Box {
             FolderChip(
-                label = stringResource(R.string.chat_page_folder_default),
-                selected = section == DrawerSection.CHAT && selectedFolderId == null,
-                onClick = { onSectionChange(DrawerSection.CHAT); onSelect(null) },
-                onLongClick = {},
+                label = folder.name,
+                icon = HugeIcons.Folder01,
+                selected = selectedFolderId == folder.id,
+                onClick = { onSelect(folder.id) },
+                onLongClick = { menuExpanded = true },
             )
-        }
-        item {
-            FolderChip(
-                label = "生图",
-                selected = section == DrawerSection.IMAGE,
-                onClick = { onSectionChange(DrawerSection.IMAGE) },
-                onLongClick = {},
-            )
-        }
-        item {
-            FolderChip(
-                label = "翻译",
-                selected = section == DrawerSection.TRANSLATION,
-                onClick = { onSectionChange(DrawerSection.TRANSLATION) },
-                onLongClick = {},
-            )
-        }
-        items(folders) { folder ->
-            var menuExpanded by remember { mutableStateOf(false) }
-            Box {
-                FolderChip(
-                    label = folder.name,
-                    icon = HugeIcons.Folder01,
-                    selected = section == DrawerSection.CHAT && selectedFolderId == folder.id,
-                    onClick = { onSectionChange(DrawerSection.CHAT); onSelect(folder.id) },
-                    onLongClick = { menuExpanded = true },
+            DropdownMenu(
+                expanded = menuExpanded,
+                onDismissRequest = { menuExpanded = false },
+            ) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.chat_page_rename)) },
+                    leadingIcon = { Icon(HugeIcons.PencilEdit01, null) },
+                    onClick = {
+                        onRename(folder)
+                        menuExpanded = false
+                    }
                 )
-                DropdownMenu(
-                    expanded = menuExpanded,
-                    onDismissRequest = { menuExpanded = false },
-                ) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.chat_page_rename)) },
-                        leadingIcon = { Icon(HugeIcons.PencilEdit01, null) },
-                        onClick = {
-                            onRename(folder)
-                            menuExpanded = false
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.chat_page_delete)) },
-                        leadingIcon = { Icon(HugeIcons.Delete01, null) },
-                        onClick = {
-                            onDelete(folder)
-                            menuExpanded = false
-                        }
-                    )
-                }
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.chat_page_delete)) },
+                    leadingIcon = { Icon(HugeIcons.Delete01, null) },
+                    onClick = {
+                        onDelete(folder)
+                        menuExpanded = false
+                    }
+                )
             }
         }
     }
@@ -834,23 +844,11 @@ private fun ConversationSortButton(
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     Box {
-        Surface(
+        DrawerToolButton(
+            icon = HugeIcons.Sorting01,
+            contentDescription = stringResource(R.string.chat_page_sort_conversations),
             onClick = { menuExpanded = true },
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
-        ) {
-            Tooltip(
-                tooltip = { Text(stringResource(R.string.chat_page_sort_conversations)) }
-            ) {
-                Icon(
-                    imageVector = HugeIcons.Sorting01,
-                    contentDescription = stringResource(R.string.chat_page_sort_conversations),
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .size(16.dp),
-                )
-            }
-        }
+        )
         DropdownMenu(
             expanded = menuExpanded,
             onDismissRequest = { menuExpanded = false },
@@ -895,9 +893,11 @@ private fun FolderChip(
         color = if (selected) {
             MaterialTheme.colorScheme.secondaryContainer
         } else {
-            MaterialTheme.colorScheme.surfaceContainerLow
+            // 抽屉底色就是 surfaceContainerLow，未选中的要再深一档才看得出来
+            MaterialTheme.colorScheme.surfaceContainerHigh
         },
         modifier = Modifier
+            .height(32.dp)
             .clip(CircleShape)
             .combinedClickable(
                 onClick = onClick,
@@ -905,7 +905,7 @@ private fun FolderChip(
             )
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {

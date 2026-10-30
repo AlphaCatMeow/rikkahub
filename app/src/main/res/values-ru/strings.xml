@@ -1791,4 +1791,18 @@
   <string name="setting_model_page_memory_model">Модель консолидации памяти</string>
   <string name="setting_model_page_memory_model_desc">Модель, которая организует диалоги в долговременную память в фоновом режиме; если не задана, используется быстрая модель</string>
   <string name="setting_model_page_memory_model_follow_fast">Как у быстрой модели</string>
+  <string name="drawer_section_chat">Чат</string>
+  <string name="drawer_section_image">Изображения</string>
+  <string name="drawer_section_translation">Перевод</string>
+  <string name="drawer_new_chat">Новый чат</string>
+  <string name="drawer_new_image">Новое изображение</string>
+  <string name="drawer_new_translation">Новый перевод</string>
+  <string name="drawer_folder_unfiled">Без папки</string>
+  <string name="drawer_empty_images">Сессий генерации изображений пока нет</string>
+  <string name="drawer_empty_translations">Переводов пока нет</string>
+  <string name="drawer_load_failed_retry">Не удалось загрузить. Нажмите, чтобы повторить</string>
+  <string name="drawer_delete_translation_confirm">Удалить эту запись перевода?</string>
+  <string name="media_creation_page_param_quality">Качество</string>
+  <string name="media_creation_page_param_quality_hint">напр. high</string>
+  <string name="media_creation_page_summary_quality">Качество %1$s</string>
 </resources>

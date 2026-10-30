@@ -1789,4 +1789,18 @@
   <string name="setting_model_page_memory_model">記憶整理模型</string>
   <string name="setting_model_page_memory_model_desc">用於在背景將對話整理為長期記憶的模型；未設定時會使用快速模型</string>
   <string name="setting_model_page_memory_model_follow_fast">跟隨快速模型</string>
+  <string name="drawer_section_chat">聊天</string>
+  <string name="drawer_section_image">生圖</string>
+  <string name="drawer_section_translation">翻譯</string>
+  <string name="drawer_new_chat">新對話</string>
+  <string name="drawer_new_image">新生圖</string>
+  <string name="drawer_new_translation">新翻譯</string>
+  <string name="drawer_folder_unfiled">未分類</string>
+  <string name="drawer_empty_images">尚無生圖工作階段</string>
+  <string name="drawer_empty_translations">尚無翻譯紀錄</string>
+  <string name="drawer_load_failed_retry">載入失敗，點擊重試</string>
+  <string name="drawer_delete_translation_confirm">刪除這筆翻譯紀錄？</string>
+  <string name="media_creation_page_param_quality">品質</string>
+  <string name="media_creation_page_param_quality_hint">例如 high</string>
+  <string name="media_creation_page_summary_quality">品質 %1$s</string>
 </resources>

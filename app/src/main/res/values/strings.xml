@@ -1792,4 +1792,18 @@
   <string name="setting_model_page_memory_model">Memory Consolidation Model</string>
   <string name="setting_model_page_memory_model_desc">Model used to organize conversations into long-term memory in the background; uses the fast model when not set</string>
   <string name="setting_model_page_memory_model_follow_fast">Same as fast model</string>
+  <string name="drawer_section_chat">Chat</string>
+  <string name="drawer_section_image">Images</string>
+  <string name="drawer_section_translation">Translate</string>
+  <string name="drawer_new_chat">New chat</string>
+  <string name="drawer_new_image">New image</string>
+  <string name="drawer_new_translation">New translation</string>
+  <string name="drawer_folder_unfiled">Unfiled</string>
+  <string name="drawer_empty_images">No image sessions yet</string>
+  <string name="drawer_empty_translations">No translations yet</string>
+  <string name="drawer_load_failed_retry">Failed to load. Tap to retry</string>
+  <string name="drawer_delete_translation_confirm">Delete this translation record?</string>
+  <string name="media_creation_page_param_quality">Quality</string>
+  <string name="media_creation_page_param_quality_hint">e.g. high</string>
+  <string name="media_creation_page_summary_quality">Quality %1$s</string>
 </resources>

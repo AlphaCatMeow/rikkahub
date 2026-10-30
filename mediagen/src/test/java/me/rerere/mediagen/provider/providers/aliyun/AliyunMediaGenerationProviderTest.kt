@@ -87,16 +87,31 @@ class AliyunMediaGenerationProviderTest {
         val body = generation.buildBody(wan, MediaGenerationRequest(prompt = "cat", resolution = "2K"))
         assertEquals(JsonPrimitive("2K"), body["parameters"]!!.jsonObject["size"])
 
+        // 比例换算成像素尺寸，不给档位时按 1280*1280 的总像素换算
+        val ratio = generation.buildBody(wan, MediaGenerationRequest(prompt = "cat", aspectRatio = "16:9"))
+        assertEquals(JsonPrimitive("1696*960"), ratio["parameters"]!!.jsonObject["size"])
+        val tier = generation.buildBody(
+            wan,
+            MediaGenerationRequest(prompt = "cat", resolution = "2K", aspectRatio = "3:4")
+        )
+        assertEquals(JsonPrimitive("1760*2352"), tier["parameters"]!!.jsonObject["size"])
+
         assertThrows(IllegalArgumentException::class.java) {
-            generation.buildBody(wan, MediaGenerationRequest(prompt = "cat", aspectRatio = "16:9"))
-        }
-        assertThrows(IllegalArgumentException::class.java) {
-            generation.buildBody(wan, MediaGenerationRequest(inputs = listOf(MediaGenerationInput.Image("https://e.com/a.png"))))
+            generation.buildBody(wan, MediaGenerationRequest(prompt = "cat", quality = "high"))
         }
         assertThrows(IllegalArgumentException::class.java) {
             generation.buildBody(
                 wan,
-                MediaGenerationRequest(prompt = "cat", inputs = listOf(MediaGenerationInput.Audio("https://e.com/a.mp3"))),
+                MediaGenerationRequest(inputs = listOf(MediaGenerationInput.Image("https://e.com/a.png")))
+            )
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            generation.buildBody(
+                wan,
+                MediaGenerationRequest(
+                    prompt = "cat",
+                    inputs = listOf(MediaGenerationInput.Audio("https://e.com/a.mp3"))
+                ),
             )
         }
     }

@@ -63,6 +63,39 @@ class OpenAIMediaGenerationProviderTest {
     }
 
     @Test
+    fun generationBodyMapsAspectRatioAndQuality() {
+        val provider = OpenAIMediaGenerationProvider(OkHttpClient())
+        fun body(request: MediaGenerationRequest) = provider.buildGenerationBody(setting, model, request)
+
+        val quality = body(MediaGenerationRequest(prompt = "cat", quality = "high"))
+        assertEquals(JsonPrimitive("high"), quality["quality"])
+        assertNull(quality["size"])
+
+        // 常见比例用所有 GPT 图像模型都接受的固定尺寸，其余按档位换算
+        assertEquals(JsonPrimitive("1536x1024"), body(MediaGenerationRequest(prompt = "cat", aspectRatio = "3:2"))["size"])
+        assertEquals(JsonPrimitive("1360x768"), body(MediaGenerationRequest(prompt = "cat", aspectRatio = "16:9"))["size"])
+        assertEquals(
+            JsonPrimitive("2720x1536"),
+            body(MediaGenerationRequest(prompt = "cat", resolution = "2K", aspectRatio = "16:9"))["size"],
+        )
+        // size 不接受档位，只给档位时按正方形换算
+        assertEquals(JsonPrimitive("2048x2048"), body(MediaGenerationRequest(prompt = "cat", resolution = "2K"))["size"])
+        assertThrows(IllegalArgumentException::class.java) {
+            body(MediaGenerationRequest(prompt = "cat", resolution = "1024x1024", aspectRatio = "16:9"))
+        }
+
+        val grok = provider.buildGenerationBody(
+            setting = setting.copy(baseUrl = "https://api.x.ai/v1"),
+            model = model.copy(modelId = "grok-imagine-image"),
+            request = MediaGenerationRequest(prompt = "cat", resolution = "2K", aspectRatio = "16:9", quality = "low"),
+        )
+        assertNull(grok["size"])
+        assertEquals(JsonPrimitive("2k"), grok["resolution"])
+        assertEquals(JsonPrimitive("16:9"), grok["aspect_ratio"])
+        assertEquals(JsonPrimitive("low"), grok["quality"])
+    }
+
+    @Test
     fun generationBodyOmitsAutoSizeAndGrokSize() {
         val provider = OpenAIMediaGenerationProvider(OkHttpClient())
 

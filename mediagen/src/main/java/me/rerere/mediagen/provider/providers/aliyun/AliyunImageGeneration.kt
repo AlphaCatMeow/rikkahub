@@ -17,6 +17,7 @@ import me.rerere.mediagen.model.MediaGenerationTask
 import me.rerere.mediagen.model.MediaGenerationUsage
 import me.rerere.mediagen.provider.MediaGenerationProviderSetting
 import me.rerere.mediagen.provider.providers.bearerRequest
+import me.rerere.mediagen.provider.providers.combineImageSize
 import me.rerere.mediagen.provider.providers.executeJson
 import me.rerere.mediagen.provider.providers.imageMimeType
 import me.rerere.mediagen.provider.providers.int
@@ -75,7 +76,10 @@ internal class AliyunImageGeneration(
         })
         put("parameters", buildJsonObject {
             request.extraParameters.forEach { (key, value) -> put(key, value) }
-            request.resolution?.takeIf(String::isNotBlank)?.let { put("size", it.toAliyunSize()) }
+            // 接口没有比例字段，比例要换算成像素尺寸；不给档位时按 1280*1280 的总像素换算，
+            // 这是万相 2.6 允许的上限，千问也能接受
+            combineImageSize(request.resolution, request.aspectRatio, defaultEdge = 1280, provider = "Aliyun")
+                ?.let { put("size", it.toAliyunSize()) }
             request.count?.let { put("n", it) }
             request.watermark?.let { put("watermark", it) }
             request.seed?.let { put("seed", it) }
@@ -117,7 +121,7 @@ internal class AliyunImageGeneration(
 
     private fun validate(request: MediaGenerationRequest) {
         require(!request.prompt.isNullOrBlank()) { "Aliyun image generation requires a non-empty prompt" }
-        require(request.aspectRatio == null) { "Aliyun image generation uses resolution instead of aspectRatio" }
+        require(request.quality == null) { "Aliyun image generation does not expose quality" }
         require(request.durationSeconds == null) { "Aliyun image generation does not expose duration" }
         require(request.generateAudio == null) { "Aliyun image generation does not expose generateAudio" }
         require(request.callbackUrl == null) { "Aliyun image generation returns results synchronously" }

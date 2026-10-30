@@ -1789,4 +1789,18 @@
   <string name="setting_model_page_memory_model">نموذج توطيد الذاكرة</string>
   <string name="setting_model_page_memory_model_desc">النموذج المستخدم لتنظيم المحادثات في الذاكرة طويلة المدى في الخلفية؛ يستخدم النموذج السريع عند عدم تعيينه</string>
   <string name="setting_model_page_memory_model_follow_fast">نفس النموذج السريع</string>
+  <string name="drawer_section_chat">الدردشة</string>
+  <string name="drawer_section_image">الصور</string>
+  <string name="drawer_section_translation">الترجمة</string>
+  <string name="drawer_new_chat">دردشة جديدة</string>
+  <string name="drawer_new_image">صورة جديدة</string>
+  <string name="drawer_new_translation">ترجمة جديدة</string>
+  <string name="drawer_folder_unfiled">بدون مجلد</string>
+  <string name="drawer_empty_images">لا توجد جلسات صور بعد</string>
+  <string name="drawer_empty_translations">لا توجد ترجمات بعد</string>
+  <string name="drawer_load_failed_retry">فشل التحميل. اضغط لإعادة المحاولة</string>
+  <string name="drawer_delete_translation_confirm">حذف سجل الترجمة هذا؟</string>
+  <string name="media_creation_page_param_quality">الجودة</string>
+  <string name="media_creation_page_param_quality_hint">مثال: high</string>
+  <string name="media_creation_page_summary_quality">الجودة %1$s</string>
 </resources>

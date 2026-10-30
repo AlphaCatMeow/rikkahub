@@ -64,6 +64,7 @@ data class MediaCreationParams(
     val count: Int? = null,
     val resolution: String? = null,
     val aspectRatio: String? = null,
+    val quality: String? = null,
     val durationSeconds: Int? = null,
     val generateAudio: Boolean? = null,
     val watermark: Boolean? = null,
@@ -161,6 +162,7 @@ fun MediaCreationParams.supportedBy(capabilities: MediaGenerationCapabilities): 
         count = count.takeIfSupported(MediaGenerationParameter.COUNT),
         resolution = resolution?.takeIf(String::isNotBlank).takeIfSupported(MediaGenerationParameter.RESOLUTION),
         aspectRatio = aspectRatio?.takeIf(String::isNotBlank).takeIfSupported(MediaGenerationParameter.ASPECT_RATIO),
+        quality = quality?.takeIf(String::isNotBlank).takeIfSupported(MediaGenerationParameter.QUALITY),
         durationSeconds = durationSeconds.takeIfSupported(MediaGenerationParameter.DURATION),
         generateAudio = generateAudio.takeIfSupported(MediaGenerationParameter.GENERATE_AUDIO),
         watermark = watermark.takeIfSupported(MediaGenerationParameter.WATERMARK),
@@ -184,6 +186,8 @@ fun MediaCreationParams.withRequired(
             .orRequired(MediaGenerationParameter.RESOLUTION, defaults.resolution),
         aspectRatio = aspectRatio?.takeIf(String::isNotBlank)
             .orRequired(MediaGenerationParameter.ASPECT_RATIO, defaults.aspectRatio),
+        quality = quality?.takeIf(String::isNotBlank)
+            .orRequired(MediaGenerationParameter.QUALITY, defaults.quality),
         durationSeconds = durationSeconds.orRequired(MediaGenerationParameter.DURATION, defaults.durationSeconds),
         generateAudio = generateAudio.orRequired(MediaGenerationParameter.GENERATE_AUDIO, defaults.generateAudio),
         watermark = watermark.orRequired(MediaGenerationParameter.WATERMARK, defaults.watermark),
@@ -256,6 +260,7 @@ fun buildMediaGenerationRequest(
         count = supported.count,
         resolution = supported.resolution,
         aspectRatio = supported.aspectRatio,
+        quality = supported.quality,
         durationSeconds = supported.durationSeconds,
         generateAudio = supported.generateAudio,
         watermark = supported.watermark,

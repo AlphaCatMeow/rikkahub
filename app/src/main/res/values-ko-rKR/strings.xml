@@ -1791,4 +1791,18 @@ mDNS 주소: .local 호스트네임을 사용하며, IP를 몰라도 같은 네�
   <string name="setting_model_page_memory_model">기억 통합 모델</string>
   <string name="setting_model_page_memory_model_desc">백그라운드에서 대화를 장기 기억으로 정리하는 데 사용되는 모델입니다. 설정하지 않으면 빠른 모델을 사용합니다.</string>
   <string name="setting_model_page_memory_model_follow_fast">빠른 모델과 동일</string>
+  <string name="drawer_section_chat">채팅</string>
+  <string name="drawer_section_image">이미지</string>
+  <string name="drawer_section_translation">번역</string>
+  <string name="drawer_new_chat">새 채팅</string>
+  <string name="drawer_new_image">새 이미지</string>
+  <string name="drawer_new_translation">새 번역</string>
+  <string name="drawer_folder_unfiled">미분류</string>
+  <string name="drawer_empty_images">아직 이미지 세션이 없습니다</string>
+  <string name="drawer_empty_translations">아직 번역 기록이 없습니다</string>
+  <string name="drawer_load_failed_retry">불러오기 실패. 탭하여 다시 시도</string>
+  <string name="drawer_delete_translation_confirm">이 번역 기록을 삭제할까요?</string>
+  <string name="media_creation_page_param_quality">품질</string>
+  <string name="media_creation_page_param_quality_hint">예: high</string>
+  <string name="media_creation_page_summary_quality">품질 %1$s</string>
 </resources>

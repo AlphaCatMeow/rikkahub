@@ -1791,4 +1791,18 @@ mDNSアドレス: .localホスト名を使用し、IPを知らなくても同じ
   <string name="setting_model_page_memory_model">記憶整理モデル</string>
   <string name="setting_model_page_memory_model_desc">バックグラウンドで会話を長期記憶に整理するために使用されるモデル。未設定の場合は高速モデルを使用します</string>
   <string name="setting_model_page_memory_model_follow_fast">高速モデルと同じ</string>
+  <string name="drawer_section_chat">チャット</string>
+  <string name="drawer_section_image">画像</string>
+  <string name="drawer_section_translation">翻訳</string>
+  <string name="drawer_new_chat">新しいチャット</string>
+  <string name="drawer_new_image">新しい画像</string>
+  <string name="drawer_new_translation">新しい翻訳</string>
+  <string name="drawer_folder_unfiled">未分類</string>
+  <string name="drawer_empty_images">画像セッションはまだありません</string>
+  <string name="drawer_empty_translations">翻訳履歴はまだありません</string>
+  <string name="drawer_load_failed_retry">読み込みに失敗しました。タップして再試行</string>
+  <string name="drawer_delete_translation_confirm">この翻訳履歴を削除しますか？</string>
+  <string name="media_creation_page_param_quality">品質</string>
+  <string name="media_creation_page_param_quality_hint">例: high</string>
+  <string name="media_creation_page_summary_quality">品質 %1$s</string>
 </resources>

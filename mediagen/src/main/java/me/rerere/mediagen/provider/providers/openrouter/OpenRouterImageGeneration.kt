@@ -62,6 +62,7 @@ internal class OpenRouterImageGeneration(
         request.count?.let { put("n", it) }
         putResolution(request.resolution)
         request.aspectRatio?.let { put("aspect_ratio", it) }
+        request.quality?.let { put("quality", it) }
         request.seed?.let { put("seed", it) }
     }
 

@@ -83,7 +83,8 @@ class MiniMaxMediaGenerationProvider(
                             put("type", "image_url")
                             put("image_url", buildJsonObject { put("url", input.url) })
                             put(
-                                "role", when (input.role) {
+                                "role",
+                                when (input.role) {
                                     ImageRole.FIRST_FRAME -> "first_frame"
                                     ImageRole.LAST_FRAME -> "last_frame"
                                     ImageRole.REFERENCE -> "reference_image"
@@ -122,6 +123,7 @@ class MiniMaxMediaGenerationProvider(
         require(request.generateAudio == null) { "MiniMax H3 does not expose generateAudio as an output option" }
         require(request.seed == null) { "MiniMax H3 does not expose seed" }
         require(request.promptEnhancement == null) { "MiniMax H3 does not expose prompt enhancement" }
+        require(request.quality == null) { "MiniMax H3 does not expose quality" }
     }
 
     internal fun parseTask(root: JsonObject): MediaGenerationTask {

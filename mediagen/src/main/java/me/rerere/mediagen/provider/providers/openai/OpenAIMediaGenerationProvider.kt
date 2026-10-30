@@ -18,12 +18,15 @@ import me.rerere.mediagen.model.MediaKind
 import me.rerere.mediagen.model.RemoteMediaModel
 import me.rerere.mediagen.provider.MediaGenerationProvider
 import me.rerere.mediagen.provider.MediaGenerationProviderSetting
+import me.rerere.mediagen.provider.providers.combineImageSize
 import me.rerere.mediagen.provider.providers.executeJson
 import me.rerere.mediagen.provider.providers.imageMimeType
+import me.rerere.mediagen.provider.providers.isPixelSize
 import me.rerere.mediagen.provider.providers.long
 import me.rerere.mediagen.provider.providers.obj
 import me.rerere.mediagen.provider.providers.postJson
 import me.rerere.mediagen.provider.providers.string
+import me.rerere.mediagen.provider.providers.tierEdge
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -96,7 +99,7 @@ class OpenAIMediaGenerationProvider(
         put("model", model.modelId)
         put("prompt", request.prompt)
         request.count?.let { put("n", it) }
-        resolveSize(setting, model, request.resolution)?.let { put("size", it) }
+        sizeFields(setting, model, request).forEach { (key, value) -> put(key, value) }
     }
 
     internal fun buildEditBody(
@@ -112,7 +115,7 @@ class OpenAIMediaGenerationProvider(
         fields["model"] = model.modelId
         fields["prompt"] = request.prompt.orEmpty()
         request.count?.let { fields["n"] = it.toString() }
-        resolveSize(setting, model, request.resolution)?.let { fields["size"] = it }
+        fields += sizeFields(setting, model, request)
 
         val builder = MultipartBody.Builder().setType(MultipartBody.FORM)
         fields.forEach { (key, value) -> builder.addFormDataPart(key, value) }
@@ -165,7 +168,6 @@ class OpenAIMediaGenerationProvider(
 
     private fun validate(request: MediaGenerationRequest) {
         require(!request.prompt.isNullOrBlank()) { "OpenAI image generation requires a non-empty prompt" }
-        require(request.aspectRatio == null) { "OpenAI image generation uses resolution instead of aspectRatio" }
         require(request.durationSeconds == null) { "OpenAI image generation does not expose duration" }
         require(request.generateAudio == null) { "OpenAI image generation does not expose generateAudio" }
         require(request.watermark == null) { "OpenAI image generation does not expose watermark" }
@@ -174,14 +176,35 @@ class OpenAIMediaGenerationProvider(
         require(request.callbackUrl == null) { "OpenAI image generation returns results synchronously" }
     }
 
-    // "auto" 交给服务端默认值；Grok 的兼容接口不接受 size
-    private fun resolveSize(
+    /**
+     * 尺寸、比例和质量对应的字段。
+     *
+     * OpenAI 只有 size 字段，不接受档位：比例按档位换算成像素尺寸（gpt-image-2 起接受 16 倍数的任意尺寸），
+     * 不给档位时 1:1、3:2、2:3 用所有 GPT 图像模型都接受的三个固定尺寸；"auto" 交给服务端默认值。
+     * quality 原样下发，gpt-image 系列是 low / medium / high / auto，dall-e-3 是 standard / hd。
+     *
+     * Grok 的兼容接口不接受 size，比例和档位分别走 aspect_ratio 和 resolution（1k / 2k），像素尺寸只能丢掉。
+     */
+    private fun sizeFields(
         setting: MediaGenerationProviderSetting.OpenAI,
         model: MediaGenerationModel,
-        size: String?,
-    ): String? {
-        if (size.isNullOrBlank() || size.equals("auto", ignoreCase = true)) return null
-        return size.takeUnless { isGrok(setting, model) }
+        request: MediaGenerationRequest,
+    ): Map<String, String> {
+        val fields = linkedMapOf<String, String>()
+        val resolution = request.resolution?.trim()?.takeUnless { it.isEmpty() || it.equals("auto", ignoreCase = true) }
+        if (isGrok(setting, model)) {
+            resolution?.takeUnless { it.isPixelSize() }?.let { fields["resolution"] = it.lowercase() }
+            request.aspectRatio?.let { fields["aspect_ratio"] = it }
+        } else {
+            val tierEdge = resolution?.tierEdge()
+            // size 不接受档位，只给档位时按正方形换算
+            val ratio = request.aspectRatio ?: "1:1".takeIf { tierEdge != null }
+            val size = ratio?.takeIf { resolution == null || tierEdge == 1024 }?.let { LEGACY_SIZES[it.trim()] }
+                ?: combineImageSize(resolution, ratio, defaultEdge = 1024, provider = "OpenAI")
+            size?.let { fields["size"] = it }
+        }
+        request.quality?.takeIf(String::isNotBlank)?.let { fields["quality"] = it }
+        return fields
     }
 
     // 只匹配 x.ai 本身及其子域名，避免 "xxx-max.ai" 之类的中转域名被误判
@@ -195,6 +218,12 @@ class OpenAIMediaGenerationProvider(
         val IMAGE_MODEL_HINT = Regex(
             "image|dall-?e|imagen|flux|seedream|midjourney|stable-diffusion|sdxl|sd3|kolors|recraft|ideogram|cogview|hidream|nano-banana",
             RegexOption.IGNORE_CASE,
+        )
+        // gpt-image-1 / 1.5 只接受这三个尺寸
+        val LEGACY_SIZES = mapOf(
+            "1:1" to "1024x1024",
+            "3:2" to "1536x1024",
+            "2:3" to "1024x1536",
         )
         val EDIT_IMAGE_MEDIA_TYPES = mapOf(
             "png" to "image/png",
