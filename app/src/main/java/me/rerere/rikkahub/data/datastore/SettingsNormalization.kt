@@ -31,12 +31,8 @@ internal fun Settings.withBuiltInDefaults(): Settings {
             else -> provider
         }
     }.toMutableList()
-    val assistants = this.assistants.ifEmpty { DEFAULT_ASSISTANTS }.toMutableList()
-    DEFAULT_ASSISTANTS.forEach { defaultAssistant ->
-        if (assistants.none { it.id == defaultAssistant.id }) {
-            assistants.add(defaultAssistant.copy())
-        }
-    }
+    // 内置助手允许删除，只有一个都不剩时才补回来
+    val assistants = this.assistants.ifEmpty { DEFAULT_ASSISTANTS }
     val ttsProviders = this.ttsProviders.ifEmpty { DEFAULT_TTS_PROVIDERS }.toMutableList()
     DEFAULT_TTS_PROVIDERS.forEach { defaultTTSProvider ->
         if (ttsProviders.none { provider -> provider.id == defaultTTSProvider.id }) {

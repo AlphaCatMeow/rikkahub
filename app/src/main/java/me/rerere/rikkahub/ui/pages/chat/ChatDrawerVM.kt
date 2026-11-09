@@ -2,6 +2,7 @@ package me.rerere.rikkahub.ui.pages.chat
 
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
@@ -10,6 +11,7 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.insertSeparators
 import androidx.paging.map
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,10 +26,14 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import me.rerere.rikkahub.BuildConfig
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.ai.MemoryConsolidationScheduler
 import me.rerere.rikkahub.data.datastore.ConversationSortOrder
+import me.rerere.rikkahub.data.datastore.Settings
 import me.rerere.rikkahub.data.datastore.SettingsStore
+import me.rerere.rikkahub.data.files.FilesManager
+import me.rerere.rikkahub.data.model.Avatar
 import me.rerere.rikkahub.data.datastore.getCurrentAssistant
 import me.rerere.rikkahub.data.db.entity.TranslationHistoryEntity
 import me.rerere.rikkahub.data.model.Conversation
@@ -37,6 +43,8 @@ import me.rerere.rikkahub.data.repository.FolderRepository
 import me.rerere.rikkahub.data.repository.TranslationHistoryRepository
 import me.rerere.rikkahub.data.repository.memoryId
 import me.rerere.rikkahub.service.ChatService
+import me.rerere.rikkahub.utils.UiState
+import me.rerere.rikkahub.utils.UpdateChecker
 import me.rerere.rikkahub.utils.toLocalString
 import java.time.LocalDate
 import java.time.ZoneId
@@ -51,7 +59,69 @@ class ChatDrawerVM(
     private val memoryConsolidationScheduler: MemoryConsolidationScheduler,
     private val savedStateHandle: SavedStateHandle,
     private val translationRepository: TranslationHistoryRepository,
+    private val filesManager: FilesManager,
+    val updateChecker: UpdateChecker,
 ) : ViewModel() {
+
+    // 从生图/翻译切回聊天时回到最后看的那个会话
+    var lastChatId: Uuid? = null
+
+    // 侧边栏在主界面外层常驻，不属于某个会话，会话操作都从这里走
+    val conversationJobs = chatService
+        .getConversationJobs()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
+
+    val updateState = settingsStore.settingsFlow
+        .map { settings ->
+            !BuildConfig.IS_PLAY_STORE &&
+                !settings.init &&
+                settings.displaySetting.updateCheckDisabledUntilEpochMillis <= System.currentTimeMillis()
+        }
+        .distinctUntilChanged()
+        .flatMapLatest { enabled ->
+            if (enabled) updateChecker.updateState else flowOf(UiState.Loading)
+        }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000),
+            UiState.Loading,
+        )
+
+    fun updateSettings(fn: (Settings) -> Settings): Job = viewModelScope.launch {
+        var oldAvatar: Avatar? = null
+        var newAvatar: Avatar? = null
+        settingsStore.update { old ->
+            fn(old).also { new ->
+                oldAvatar = old.displaySetting.userAvatar
+                newAvatar = new.displaySetting.userAvatar
+            }
+        }
+        // 换了头像就删掉旧头像文件
+        val previous = oldAvatar
+        if (previous is Avatar.Image && previous != newAvatar) {
+            filesManager.deleteChatFiles(listOf(previous.url.toUri()))
+        }
+    }
+
+    fun generateTitle(conversation: Conversation) {
+        viewModelScope.launch { chatService.generateTitle(conversation.id, true) }
+    }
+
+    fun deleteConversation(conversation: Conversation): Job =
+        viewModelScope.launch { chatService.deleteConversation(conversation.id) }
+
+    fun togglePinned(conversation: Conversation) {
+        viewModelScope.launch { chatService.toggleConversationPinned(conversation.id) }
+    }
+
+    fun moveConversationToAssistant(conversation: Conversation, targetAssistantId: Uuid, currentId: Uuid?) {
+        viewModelScope.launch {
+            chatService.moveConversationToAssistant(conversation.id, targetAssistantId)
+            if (conversation.id == currentId) {
+                settingsStore.selectAssistant(targetAssistantId)
+            }
+        }
+    }
 
     val translations = Pager(
         config = PagingConfig(pageSize = 20, enablePlaceholders = false),

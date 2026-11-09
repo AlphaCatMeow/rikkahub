@@ -91,6 +91,7 @@ import me.rerere.rikkahub.ui.pages.assistant.detail.AssistantPromptPage
 import me.rerere.rikkahub.ui.pages.assistant.detail.AssistantRequestPage
 import me.rerere.rikkahub.ui.pages.backup.BackupPage
 import me.rerere.rikkahub.ui.pages.chat.ChatPage
+import me.rerere.rikkahub.ui.pages.chat.MainShell
 import me.rerere.rikkahub.ui.pages.debug.DebugPage
 import me.rerere.rikkahub.ui.pages.extensions.ExtensionsPage
 import me.rerere.rikkahub.ui.pages.extensions.PromptPage
@@ -325,278 +326,286 @@ class RouteActivity : ComponentActivity() {
                         .semantics { testTagsAsResourceId = true }
                         .background(MaterialTheme.colorScheme.background)
                 ) {
-                    NavDisplay(
-                        backStack = backStack,
-                        entryDecorators = listOf(
-                            rememberSaveableStateHolderNavEntryDecorator(),
-                            rememberViewModelStoreNavEntryDecorator(),
-                        ),
-                        modifier = Modifier.fillMaxSize(),
-                        // 同一帧内连续两次返回时 NavDisplay 的返回状态还没更新，会多回调一次，不加判断会把栈弹空
-                        onBack = { if (backStack.size > 1) backStack.removeLastOrNull() },
-                        transitionSpec = {
-                            if (backStack.size == 1) fadeIn() togetherWith fadeOut()
-                            else {
-                                slideInHorizontally { it } togetherWith
-                                    slideOutHorizontally { -it / 2 } + scaleOut(targetScale = 0.7f) + fadeOut()
-                            }
-                        },
-                        popTransitionSpec = {
-                            slideInHorizontally { -it / 2 } + scaleIn(initialScale = 0.7f) + fadeIn() togetherWith
-                                slideOutHorizontally { it }
-                        },
-                        predictivePopTransitionSpec = {
-                            slideInHorizontally { -it / 2 } + scaleIn(initialScale = 0.7f) + fadeIn() togetherWith
-                                slideOutHorizontally { it }
-                        },
-                        entryProvider = entryProvider {
-                            entry<Screen.Chat>(
-                                metadata = NavDisplay.transitionSpec { fadeIn() togetherWith fadeOut() }
-                                    + NavDisplay.popTransitionSpec { fadeIn() togetherWith fadeOut() }
-                            ) { key ->
-                                ChatPage(
-                                    id = Uuid.parse(key.id),
-                                    text = key.text,
-                                    files = key.files.map { it.toUri() },
-                                    nodeId = key.nodeId?.let { Uuid.parse(it) }
-                                )
-                            }
+                    MainShell(current = backStack.lastOrNull()) {
+                        NavDisplay(
+                            backStack = backStack,
+                            entryDecorators = listOf(
+                                rememberSaveableStateHolderNavEntryDecorator(),
+                                rememberViewModelStoreNavEntryDecorator(),
+                            ),
+                            modifier = Modifier.fillMaxSize(),
+                            // 同一帧内连续两次返回时 NavDisplay 的返回状态还没更新，会多回调一次，不加判断会把栈弹空
+                            onBack = { if (backStack.size > 1) backStack.removeLastOrNull() },
+                            transitionSpec = {
+                                if (backStack.size == 1) fadeIn() togetherWith fadeOut()
+                                else {
+                                    slideInHorizontally { it } togetherWith
+                                        slideOutHorizontally { -it / 2 } + scaleOut(targetScale = 0.7f) + fadeOut()
+                                }
+                            },
+                            popTransitionSpec = {
+                                slideInHorizontally { -it / 2 } + scaleIn(initialScale = 0.7f) + fadeIn() togetherWith
+                                    slideOutHorizontally { it }
+                            },
+                            predictivePopTransitionSpec = {
+                                slideInHorizontally { -it / 2 } + scaleIn(initialScale = 0.7f) + fadeIn() togetherWith
+                                    slideOutHorizontally { it }
+                            },
+                            entryProvider = entryProvider {
+                                entry<Screen.Chat>(
+                                    metadata = NavDisplay.transitionSpec { fadeIn() togetherWith fadeOut() }
+                                        + NavDisplay.popTransitionSpec { fadeIn() togetherWith fadeOut() }
+                                ) { key ->
+                                    ChatPage(
+                                        id = Uuid.parse(key.id),
+                                        text = key.text,
+                                        files = key.files.map { it.toUri() },
+                                        nodeId = key.nodeId?.let { Uuid.parse(it) }
+                                    )
+                                }
 
-                            entry<Screen.ShareHandler> { key ->
-                                ShareHandlerPage(
-                                    text = key.text,
-                                    image = key.streamUri
-                                )
-                            }
+                                entry<Screen.ShareHandler> { key ->
+                                    ShareHandlerPage(
+                                        text = key.text,
+                                        image = key.streamUri
+                                    )
+                                }
 
-                            entry<Screen.History> {
-                                HistoryPage()
-                            }
+                                entry<Screen.History> {
+                                    HistoryPage()
+                                }
 
-                            entry<Screen.Favorite> {
-                                FavoritePage()
-                            }
+                                entry<Screen.Favorite> {
+                                    FavoritePage()
+                                }
 
-                            entry<Screen.Assistant> {
-                                AssistantPage()
-                            }
+                                entry<Screen.Assistant> {
+                                    AssistantPage()
+                                }
 
-                            entry<Screen.AssistantDetail> { key ->
-                                AssistantDetailPage(key.id)
-                            }
+                                entry<Screen.AssistantDetail> { key ->
+                                    AssistantDetailPage(key.id)
+                                }
 
-                            entry<Screen.AssistantBasic> { key ->
-                                AssistantBasicPage(key.id)
-                            }
+                                entry<Screen.AssistantBasic> { key ->
+                                    AssistantBasicPage(key.id)
+                                }
 
-                            entry<Screen.AssistantPrompt> { key ->
-                                AssistantPromptPage(key.id)
-                            }
+                                entry<Screen.AssistantPrompt> { key ->
+                                    AssistantPromptPage(key.id)
+                                }
 
-                            entry<Screen.AssistantMemory> { key ->
-                                AssistantMemoryPage(key.id)
-                            }
+                                entry<Screen.AssistantMemory> { key ->
+                                    AssistantMemoryPage(key.id)
+                                }
 
-                            entry<Screen.MemoryFile> { key ->
-                                MemoryFilePage(memoryId = key.memoryId, path = key.path)
-                            }
+                                entry<Screen.MemoryFile> { key ->
+                                    MemoryFilePage(memoryId = key.memoryId, path = key.path)
+                                }
 
-                            entry<Screen.AssistantRequest> { key ->
-                                AssistantRequestPage(key.id)
-                            }
+                                entry<Screen.AssistantRequest> { key ->
+                                    AssistantRequestPage(key.id)
+                                }
 
-                            entry<Screen.AssistantMcp> { key ->
-                                AssistantMcpPage(key.id)
-                            }
+                                entry<Screen.AssistantMcp> { key ->
+                                    AssistantMcpPage(key.id)
+                                }
 
-                            entry<Screen.AssistantLocalTool> { key ->
-                                AssistantLocalToolPage(key.id)
-                            }
+                                entry<Screen.AssistantLocalTool> { key ->
+                                    AssistantLocalToolPage(key.id)
+                                }
 
-                            entry<Screen.AssistantInjections> { key ->
-                                AssistantExtensionsPage(key.id)
-                            }
+                                entry<Screen.AssistantInjections> { key ->
+                                    AssistantExtensionsPage(key.id)
+                                }
 
-                            entry<Screen.Translator> {
-                                TranslatorPage()
-                            }
+                                entry<Screen.Translator>(
+                                    metadata = NavDisplay.transitionSpec { fadeIn() togetherWith fadeOut() }
+                                        + NavDisplay.popTransitionSpec { fadeIn() togetherWith fadeOut() }
+                                ) {
+                                    TranslatorPage()
+                                }
 
-                            entry<Screen.TranslationHistory> { key ->
-                                TranslatorPage(historyId = key.id)
-                            }
+                                entry<Screen.TranslationHistory>(
+                                    metadata = NavDisplay.transitionSpec { fadeIn() togetherWith fadeOut() }
+                                        + NavDisplay.popTransitionSpec { fadeIn() togetherWith fadeOut() }
+                                ) { key ->
+                                    TranslatorPage(historyId = key.id)
+                                }
 
-                            entry<Screen.Setting> {
-                                SettingPage()
-                            }
+                                entry<Screen.Setting> {
+                                    SettingPage()
+                                }
 
-                            entry<Screen.Backup> {
-                                BackupPage()
-                            }
+                                entry<Screen.Backup> {
+                                    BackupPage()
+                                }
 
-                            entry<Screen.ImageGen> {
-                                ImageGenPage()
-                            }
+                                entry<Screen.ImageGen> {
+                                    ImageGenPage()
+                                }
 
-                            entry<Screen.MediaCreationSessions> {
-                                MediaCreationSessionsPage()
-                            }
+                                entry<Screen.MediaCreationSessions> {
+                                    MediaCreationSessionsPage()
+                                }
 
-                            // 从会话列表展开（容器变换），页面本身只做淡入淡出，避免和平移打架
-                            entry<Screen.MediaCreation>(
-                                metadata = NavDisplay.transitionSpec { fadeIn() togetherWith fadeOut() }
-                                    + NavDisplay.popTransitionSpec { fadeIn() togetherWith fadeOut() }
-                                    + NavDisplay.predictivePopTransitionSpec { fadeIn() togetherWith fadeOut() }
-                            ) { key ->
-                                MediaCreationPage(key.id)
-                            }
+                                // 从会话列表展开（容器变换），页面本身只做淡入淡出，避免和平移打架
+                                entry<Screen.MediaCreation>(
+                                    metadata = NavDisplay.transitionSpec { fadeIn() togetherWith fadeOut() }
+                                        + NavDisplay.popTransitionSpec { fadeIn() togetherWith fadeOut() }
+                                        + NavDisplay.predictivePopTransitionSpec { fadeIn() togetherWith fadeOut() }
+                                ) { key ->
+                                    MediaCreationPage(key.id)
+                                }
 
-                            entry<Screen.WebView> { key ->
-                                WebViewPage(key.url, key.contentId)
-                            }
+                                entry<Screen.WebView> { key ->
+                                    WebViewPage(key.url, key.contentId)
+                                }
 
-                            entry<Screen.SettingTheme> {
-                                SettingThemePage()
-                            }
+                                entry<Screen.SettingTheme> {
+                                    SettingThemePage()
+                                }
 
-                            entry<Screen.SettingPreferences> {
-                                SettingPreferencesPage()
-                            }
+                                entry<Screen.SettingPreferences> {
+                                    SettingPreferencesPage()
+                                }
 
-                            entry<Screen.SettingPreferencesTheme> {
-                                SettingPreferencesThemePage()
-                            }
+                                entry<Screen.SettingPreferencesTheme> {
+                                    SettingPreferencesThemePage()
+                                }
 
-                            entry<Screen.SettingPreferencesNotification> {
-                                SettingPreferencesNotificationPage()
-                            }
+                                entry<Screen.SettingPreferencesNotification> {
+                                    SettingPreferencesNotificationPage()
+                                }
 
-                            entry<Screen.SettingPreferencesGeneral> {
-                                SettingPreferencesGeneralPage()
-                            }
+                                entry<Screen.SettingPreferencesGeneral> {
+                                    SettingPreferencesGeneralPage()
+                                }
 
-                            entry<Screen.SettingPreferencesUI> {
-                                SettingPreferencesUIPage()
-                            }
+                                entry<Screen.SettingPreferencesUI> {
+                                    SettingPreferencesUIPage()
+                                }
 
-                            entry<Screen.SettingPreferencesNetwork> {
-                                SettingPreferencesNetworkPage()
-                            }
+                                entry<Screen.SettingPreferencesNetwork> {
+                                    SettingPreferencesNetworkPage()
+                                }
 
-                            entry<Screen.SettingProvider> {
-                                SettingProviderPage()
-                            }
+                                entry<Screen.SettingProvider> {
+                                    SettingProviderPage()
+                                }
 
-                            entry<Screen.SettingProviderDetail> { key ->
-                                val id = Uuid.parse(key.providerId)
-                                SettingProviderDetailPage(id = id)
-                            }
+                                entry<Screen.SettingProviderDetail> { key ->
+                                    val id = Uuid.parse(key.providerId)
+                                    SettingProviderDetailPage(id = id)
+                                }
 
-                            entry<Screen.SettingModels> {
-                                SettingModelPage()
-                            }
+                                entry<Screen.SettingModels> {
+                                    SettingModelPage()
+                                }
 
-                            entry<Screen.SettingAbout> {
-                                SettingAboutPage()
-                            }
+                                entry<Screen.SettingAbout> {
+                                    SettingAboutPage()
+                                }
 
-                            entry<Screen.SettingSearch> {
-                                SettingSearchPage()
-                            }
+                                entry<Screen.SettingSearch> {
+                                    SettingSearchPage()
+                                }
 
-                            entry<Screen.SettingSearchDetail> { key ->
-                                val id = Uuid.parse(key.serviceId)
-                                SettingSearchDetailPage(id)
-                            }
+                                entry<Screen.SettingSearchDetail> { key ->
+                                    val id = Uuid.parse(key.serviceId)
+                                    SettingSearchDetailPage(id)
+                                }
 
-                            entry<Screen.SettingSpeech> {
-                                SettingSpeechPage()
-                            }
+                                entry<Screen.SettingSpeech> {
+                                    SettingSpeechPage()
+                                }
 
-                            entry<Screen.SettingMedia> {
-                                SettingMediaPage()
-                            }
+                                entry<Screen.SettingMedia> {
+                                    SettingMediaPage()
+                                }
 
-                            entry<Screen.SettingMcp> {
-                                SettingMcpPage()
-                            }
+                                entry<Screen.SettingMcp> {
+                                    SettingMcpPage()
+                                }
 
-                            entry<Screen.SettingMcpDetail> { key ->
-                                SettingMcpDetailPage(id = Uuid.parse(key.serverId))
-                            }
+                                entry<Screen.SettingMcpDetail> { key ->
+                                    SettingMcpDetailPage(id = Uuid.parse(key.serverId))
+                                }
 
-                            entry<Screen.SettingDonate> {
-                                SettingDonatePage()
-                            }
+                                entry<Screen.SettingDonate> {
+                                    SettingDonatePage()
+                                }
 
-                            entry<Screen.SettingFiles> {
-                                SettingFilesPage()
-                            }
+                                entry<Screen.SettingFiles> {
+                                    SettingFilesPage()
+                                }
 
-                            entry<Screen.SettingWeb> {
-                                SettingWebPage()
-                            }
+                                entry<Screen.SettingWeb> {
+                                    SettingWebPage()
+                                }
 
-                            entry<Screen.Debug> {
-                                DebugPage()
-                            }
+                                entry<Screen.Debug> {
+                                    DebugPage()
+                                }
 
-                            entry<Screen.Log> {
-                                LogPage()
-                            }
+                                entry<Screen.Log> {
+                                    LogPage()
+                                }
 
-                            entry<Screen.Extensions> {
-                                ExtensionsPage()
-                            }
+                                entry<Screen.Extensions> {
+                                    ExtensionsPage()
+                                }
 
-                            entry<Screen.QuickMessages> {
-                                QuickMessagesPage()
-                            }
+                                entry<Screen.QuickMessages> {
+                                    QuickMessagesPage()
+                                }
 
-                            entry<Screen.Prompts> {
-                                PromptPage()
-                            }
+                                entry<Screen.Prompts> {
+                                    PromptPage()
+                                }
 
-                            entry<Screen.Skills> {
-                                SkillsPage()
-                            }
+                                entry<Screen.Skills> {
+                                    SkillsPage()
+                                }
 
-                            entry<Screen.Workspaces> {
-                                WorkspacePage()
-                            }
+                                entry<Screen.Workspaces> {
+                                    WorkspacePage()
+                                }
 
-                            entry<Screen.WorkspaceDetail> { key ->
-                                WorkspaceDetailPage(key.id)
-                            }
+                                entry<Screen.WorkspaceDetail> { key ->
+                                    WorkspaceDetailPage(key.id)
+                                }
 
-                            entry<Screen.WorkspaceTerminal> { key ->
-                                WorkspaceTerminalPage(key.id)
-                            }
+                                entry<Screen.WorkspaceTerminal> { key ->
+                                    WorkspaceTerminalPage(key.id)
+                                }
 
-                            entry<Screen.WorkspaceSshEditor> { key ->
-                                WorkspaceSshEditorPage(key.id)
-                            }
+                                entry<Screen.WorkspaceSshEditor> { key ->
+                                    WorkspaceSshEditorPage(key.id)
+                                }
 
-                            entry<Screen.WorkspaceFileEditor> { key ->
-                                WorkspaceFileEditorPage(
-                                    id = key.id,
-                                    area = WorkspaceStorageArea.valueOf(key.area),
-                                    path = key.path,
-                                )
-                            }
+                                entry<Screen.WorkspaceFileEditor> { key ->
+                                    WorkspaceFileEditorPage(
+                                        id = key.id,
+                                        area = WorkspaceStorageArea.valueOf(key.area),
+                                        path = key.path,
+                                    )
+                                }
 
-                            entry<Screen.SkillDetail> { key ->
-                                SkillDetailPage(skillName = key.skillName)
-                            }
+                                entry<Screen.SkillDetail> { key ->
+                                    SkillDetailPage(skillName = key.skillName)
+                                }
 
-                            entry<Screen.MessageSearch> {
-                                SearchPage()
-                            }
+                                entry<Screen.MessageSearch> {
+                                    SearchPage()
+                                }
 
-                            entry<Screen.Stats> {
-                                StatsPage()
+                                entry<Screen.Stats> {
+                                    StatsPage()
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                     if (BuildConfig.DEBUG) {
                         Text(
                             text = "[开发模式]",

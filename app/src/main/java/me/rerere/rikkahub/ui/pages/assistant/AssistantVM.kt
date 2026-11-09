@@ -39,11 +39,20 @@ class AssistantVM(
 
     fun removeAssistant(assistant: Assistant) {
         viewModelScope.launch {
-            cleanupAssistantFiles(assistant)
-
+            var removed = false
             settingsStore.update { settings ->
-                settings.copy(assistants = settings.assistants.filter { it.id != assistant.id })
+                val remaining = settings.assistants.filter { it.id != assistant.id }
+                // 至少留一个助手；删的是当前助手时切到剩下的第一个
+                if (remaining.isEmpty() || remaining.size == settings.assistants.size) return@update settings
+                removed = true
+                settings.copy(
+                    assistants = remaining,
+                    assistantId = if (settings.assistantId == assistant.id) remaining.first().id else settings.assistantId,
+                )
             }
+            // 没删成就不动它的文件、记忆和会话
+            if (!removed) return@launch
+            cleanupAssistantFiles(assistant)
             memoryRepository.deleteFilesOfAssistant(assistant.id.toString())
             chatService.deleteConversationsOfAssistant(assistant.id)
         }

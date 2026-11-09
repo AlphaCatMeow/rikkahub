@@ -62,7 +62,6 @@ import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
-import me.rerere.rikkahub.data.datastore.DEFAULT_ASSISTANTS_IDS
 import me.rerere.rikkahub.data.datastore.Settings
 import me.rerere.rikkahub.data.model.Assistant
 import me.rerere.rikkahub.data.model.MemoryFile
@@ -504,7 +503,8 @@ private fun AssistantItem(
                         text = stringResource(R.string.assistant_page_delete),
                         icon = HugeIcons.Delete01,
                         destructive = true,
-                        enabled = assistant.id !in DEFAULT_ASSISTANTS_IDS,
+                        // 内置助手也能删，只要求至少留一个
+                        enabled = settings.assistants.size > 1,
                         onClick = onDelete,
                     ),
                 )

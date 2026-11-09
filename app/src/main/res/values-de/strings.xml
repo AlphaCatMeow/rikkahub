@@ -1782,7 +1782,6 @@
   <string name="drawer_section_chat">Chat</string>
   <string name="drawer_section_image">Bilder</string>
   <string name="drawer_section_translation">Übersetzen</string>
-  <string name="drawer_new_chat">Neuer Chat</string>
   <string name="drawer_new_image">Neues Bild</string>
   <string name="drawer_new_translation">Neue Übersetzung</string>
   <string name="drawer_folder_unfiled">Ohne Ordner</string>

@@ -1779,7 +1779,6 @@
   <string name="drawer_section_chat">聊天</string>
   <string name="drawer_section_image">生圖</string>
   <string name="drawer_section_translation">翻譯</string>
-  <string name="drawer_new_chat">新對話</string>
   <string name="drawer_new_image">新生圖</string>
   <string name="drawer_new_translation">新翻譯</string>
   <string name="drawer_folder_unfiled">未分類</string>

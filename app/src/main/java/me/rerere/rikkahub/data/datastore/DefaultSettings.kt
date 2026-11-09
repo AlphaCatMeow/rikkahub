@@ -50,7 +50,6 @@ internal val DEFAULT_TTS_PROVIDERS = listOf(
     )
 )
 
-internal val DEFAULT_ASSISTANTS_IDS = DEFAULT_ASSISTANTS.map { it.id }
 
 val DEFAULT_MODE_INJECTIONS = listOf(
     PromptInjection.ModeInjection(

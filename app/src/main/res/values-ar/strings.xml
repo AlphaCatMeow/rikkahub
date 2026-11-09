@@ -1779,7 +1779,6 @@
   <string name="drawer_section_chat">الدردشة</string>
   <string name="drawer_section_image">الصور</string>
   <string name="drawer_section_translation">الترجمة</string>
-  <string name="drawer_new_chat">دردشة جديدة</string>
   <string name="drawer_new_image">صورة جديدة</string>
   <string name="drawer_new_translation">ترجمة جديدة</string>
   <string name="drawer_folder_unfiled">بدون مجلد</string>

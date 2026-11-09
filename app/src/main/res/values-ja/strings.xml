@@ -1781,7 +1781,6 @@ mDNSアドレス: .localホスト名を使用し、IPを知らなくても同じ
   <string name="drawer_section_chat">チャット</string>
   <string name="drawer_section_image">画像</string>
   <string name="drawer_section_translation">翻訳</string>
-  <string name="drawer_new_chat">新しいチャット</string>
   <string name="drawer_new_image">新しい画像</string>
   <string name="drawer_new_translation">新しい翻訳</string>
   <string name="drawer_folder_unfiled">未分類</string>

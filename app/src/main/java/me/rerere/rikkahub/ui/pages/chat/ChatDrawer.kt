@@ -57,6 +57,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import me.rerere.hugeicons.HugeIcons
@@ -88,7 +89,7 @@ import me.rerere.rikkahub.ui.components.ui.UIAvatar
 import me.rerere.rikkahub.ui.components.ui.UpdateCard
 import androidx.compose.ui.draw.clip
 import me.rerere.rikkahub.ui.context.LocalToaster
-import me.rerere.rikkahub.ui.context.Navigator
+import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.ui.toast.ToastType
 import me.rerere.rikkahub.ui.hooks.EditStateContent
 import me.rerere.rikkahub.ui.hooks.readBooleanPreference
@@ -102,12 +103,13 @@ import org.koin.compose.koinInject
 import kotlin.uuid.Uuid
 
 @Composable
-fun ChatDrawerContent(
-    navController: Navigator,
-    vm: ChatVM,
+internal fun ChatDrawerContent(
     settings: Settings,
-    current: Conversation,
+    currentSection: DrawerSection,
+    currentChatId: Uuid?,
+    onNavigate: () -> Unit,
 ) {
+    val navController = LocalNavController.current
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val toaster = LocalToaster.current
@@ -116,8 +118,27 @@ fun ChatDrawerContent(
     val activity = context as ComponentActivity
     val drawerVm: ChatDrawerVM = koinViewModel(viewModelStoreOwner = activity)
     val mediaVm: MediaCreationSessionsVM = koinViewModel(viewModelStoreOwner = activity)
-    var section by rememberSaveable { mutableStateOf(DrawerSection.CHAT) }
-    var autoScrollToCurrent by remember(current.id) { mutableStateOf(true) }
+    // 分区跟着右侧正在显示的页面走，点分区就是切换到那个模式
+    val section = currentSection
+    var autoScrollToCurrent by remember(currentChatId) { mutableStateOf(true) }
+    LaunchedEffect(currentChatId) {
+        if (currentChatId != null) drawerVm.lastChatId = currentChatId
+    }
+    fun switchSection(target: DrawerSection) {
+        if (target == section) return
+        when (target) {
+            DrawerSection.CHAT -> navigateToChatPage(navController, drawerVm.lastChatId ?: Uuid.random())
+            DrawerSection.IMAGE -> scope.launch {
+                val latest = mediaVm.sessions.filterNotNull().first().firstOrNull()
+                if (latest != null) {
+                    navController.clearAndNavigate(Screen.MediaCreation(latest.id.toString()))
+                } else {
+                    mediaVm.newSession { navController.clearAndNavigate(Screen.MediaCreation(it.toString())) }
+                }
+            }
+            DrawerSection.TRANSLATION -> navController.clearAndNavigate(Screen.Translator)
+        }
+    }
     val mediaListState = rememberLazyListState()
     val translationListState = rememberLazyListState()
 
@@ -141,13 +162,11 @@ fun ChatDrawerContent(
             }
     }
 
-    val conversationJobs by vm.conversationJobs.collectAsStateWithLifecycle(
-        initialValue = emptyMap(),
-    )
+    val conversationJobs by drawerVm.conversationJobs.collectAsStateWithLifecycle()
 
     // 昵称编辑状态
     val nicknameEditState = useEditState<String> { newNickname ->
-        vm.updateSettings {
+        drawerVm.updateSettings {
             it.copy(
                 displaySetting = it.displaySetting.copy(
                     userNickname = newNickname
@@ -195,7 +214,7 @@ fun ChatDrawerContent(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (updateChecksEnabled && !BuildConfig.IS_PLAY_STORE) {
-                UpdateCard(vm)
+                UpdateCard(drawerVm)
             }
 
             BackupReminderCard(
@@ -215,7 +234,7 @@ fun ChatDrawerContent(
                     name = settings.displaySetting.userNickname.ifBlank { stringResource(R.string.user_default_name) },
                     value = settings.displaySetting.userAvatar,
                     onUpdate = { newAvatar ->
-                        vm.updateSettings {
+                        drawerVm.updateSettings {
                             it.copy(
                                 displaySetting = it.displaySetting.copy(
                                     userAvatar = newAvatar
@@ -273,7 +292,7 @@ fun ChatDrawerContent(
                 selected = section,
                 onSelect = {
                     if (it != DrawerSection.CHAT) autoScrollToCurrent = false
-                    section = it
+                    switchSection(it)
                 },
                 minHeight = 40.dp,
                 modifier = Modifier.padding(horizontal = 4.dp),
@@ -284,8 +303,6 @@ fun ChatDrawerContent(
             // 三个分区的操作栏高度相同，切换时列表不会上下跳动
             when (section) {
                 DrawerSection.CHAT -> DrawerSectionBar(
-                    newLabel = stringResource(R.string.drawer_new_chat),
-                    onNew = { navigateToChatPage(navController) },
                     modifier = Modifier.padding(horizontal = 4.dp),
                     // 没有文件夹时只剩「未归类」一项，没有筛选的意义
                     filters = if (folders.isEmpty()) null else {
@@ -303,7 +320,7 @@ fun ChatDrawerContent(
                     ConversationSortButton(
                         sortOrder = settings.displaySetting.conversationSortOrder,
                         onSortOrderChange = { sortOrder ->
-                            vm.updateSettings {
+                            drawerVm.updateSettings {
                                 it.copy(
                                     displaySetting = it.displaySetting.copy(
                                         conversationSortOrder = sortOrder
@@ -317,12 +334,6 @@ fun ChatDrawerContent(
                 }
 
                 DrawerSection.IMAGE -> DrawerSectionBar(
-                    newLabel = stringResource(R.string.drawer_new_image),
-                    onNew = {
-                        mediaVm.newSession { id ->
-                            navController.navigate(Screen.MediaCreation(id.toString())) { launchSingleTop = true }
-                        }
-                    },
                     modifier = Modifier.padding(horizontal = 4.dp),
                 ) {
                     DrawerToolButton(
@@ -333,8 +344,6 @@ fun ChatDrawerContent(
                 }
 
                 DrawerSection.TRANSLATION -> DrawerSectionBar(
-                    newLabel = stringResource(R.string.drawer_new_translation),
-                    onNew = { navController.navigate(Screen.Translator) },
                     modifier = Modifier.padding(horizontal = 4.dp),
                 )
             }
@@ -354,7 +363,7 @@ fun ChatDrawerContent(
 
             when (section) {
                 DrawerSection.CHAT -> ConversationList(
-                    current = current,
+                    currentId = currentChatId,
                     conversations = conversations,
                     conversationJobs = conversationJobs.keys,
                     listState = conversationListState,
@@ -364,22 +373,24 @@ fun ChatDrawerContent(
                         .fillMaxWidth()
                         .weight(1f),
                     onClick = {
-                        navigateToChatPage(navController, it.id)
+                        // 点当前会话只收起抽屉，不重建页面
+                        if (it.id != currentChatId) navigateToChatPage(navController, it.id)
+                        onNavigate()
                     },
                     onRegenerateTitle = {
-                        vm.generateTitle(it, true)
+                        drawerVm.generateTitle(it)
                     },
                     onDelete = {
                         scope.launch {
-                            vm.deleteConversation(it).join()
+                            drawerVm.deleteConversation(it).join()
                             conversations.refresh()
-                            if (it.id == current.id) {
+                            if (it.id == currentChatId) {
                                 navigateToChatPage(navController)
                             }
                         }
                     },
                     onPin = {
-                        vm.updatePinnedStatus(it)
+                        drawerVm.togglePinned(it)
                     },
                     onMoveToAssistant = {
                         conversationToMove = it
@@ -396,6 +407,7 @@ fun ChatDrawerContent(
                         sessions = sessions,
                         vm = mediaVm,
                         navController = navController,
+                        onOpened = onNavigate,
                         listState = mediaListState,
                         header = if (scrollableHeader) drawerHeader else null,
                         modifier = Modifier.fillMaxWidth().weight(1f),
@@ -406,6 +418,7 @@ fun ChatDrawerContent(
                     TranslationDrawerList(
                         entries = translations,
                         navController = navController,
+                        onOpened = onNavigate,
                         onDelete = drawerVm::deleteTranslation,
                         listState = translationListState,
                         header = if (scrollableHeader) drawerHeader else null,
@@ -430,8 +443,7 @@ fun ChatDrawerContent(
                 AssistantPicker(
                     settings = settings,
                     onSelectAssistant = { assistant ->
-                        section = DrawerSection.CHAT
-                        val updateJob = vm.updateSettings { it.copy(assistantId = assistant.id) }
+                        val updateJob = drawerVm.updateSettings { it.copy(assistantId = assistant.id) }
                         scope.launch {
                             updateJob.join()
                             val id = if (context.readBooleanPreference("create_new_conversation_on_start", true)) {
@@ -443,6 +455,7 @@ fun ChatDrawerContent(
                                     ?.id ?: Uuid.random()
                             }
                             navigateToChatPage(navigator = navController, chatId = id)
+                            onNavigate()
                         }
                     },
                     modifier = Modifier.weight(1f),
@@ -712,7 +725,7 @@ fun ChatDrawerContent(
                             isCurrentAssistant = assistant.id == conversationToMove?.assistantId,
                             onClick = {
                                 conversationToMove?.let { conversation ->
-                                    vm.moveConversationToAssistant(conversation, assistant.id)
+                                    drawerVm.moveConversationToAssistant(conversation, assistant.id, currentChatId)
                                     scope.launch {
                                         bottomSheetState.hide()
                                         showMoveToAssistantSheet = false

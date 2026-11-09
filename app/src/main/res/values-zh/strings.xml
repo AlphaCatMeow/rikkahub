@@ -1792,7 +1792,6 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="drawer_section_chat">聊天</string>
   <string name="drawer_section_image">生图</string>
   <string name="drawer_section_translation">翻译</string>
-  <string name="drawer_new_chat">新对话</string>
   <string name="drawer_new_image">新生图</string>
   <string name="drawer_new_translation">新翻译</string>
   <string name="drawer_folder_unfiled">未归类</string>

@@ -56,6 +56,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.activity.ComponentActivity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
@@ -73,6 +74,7 @@ import kotlinx.coroutines.launch
 import me.rerere.ui.toast.ToastType
 import me.rerere.ui.toast.ToasterState
 import me.rerere.hugeicons.HugeIcons
+import me.rerere.hugeicons.stroke.Add01
 import me.rerere.hugeicons.stroke.Cancel01
 import me.rerere.hugeicons.stroke.CheckList
 import me.rerere.hugeicons.stroke.Delete01
@@ -82,7 +84,7 @@ import me.rerere.hugeicons.stroke.Settings03
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.model.MediaCreationNode
-import me.rerere.rikkahub.ui.components.nav.BackButton
+import me.rerere.rikkahub.ui.pages.chat.MainDrawerButton
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.ui.hooks.heroContainer
@@ -101,6 +103,8 @@ fun MediaCreationPage(id: String) {
     val vm: MediaCreationVM = koinViewModel(parameters = { parametersOf(id) })
     val navController = LocalNavController.current
     val toaster = LocalToaster.current
+    val sessionsVm: MediaCreationSessionsVM = koinViewModel(viewModelStoreOwner = LocalContext.current as ComponentActivity)
+    val openNewSession = { sessionsVm.newSession { navController.clearAndNavigate(Screen.MediaCreation(it.toString())) } }
 
     val settings by vm.settings.collectAsStateWithLifecycle()
     val session by vm.session.collectAsStateWithLifecycle()
@@ -124,7 +128,8 @@ fun MediaCreationPage(id: String) {
             when (event) {
                 is MediaCreationEvent.Error -> toaster.show(event.message, type = ToastType.Error)
                 MediaCreationEvent.UploadNotConfigured -> showUploadDialog = true
-                MediaCreationEvent.SessionGone -> navController.popBackStack()
+                // 会话被删掉了（比如从侧边栏删的），换成一个新的空会话
+                MediaCreationEvent.SessionGone -> openNewSession()
             }
         }
     }
@@ -169,9 +174,17 @@ fun MediaCreationPage(id: String) {
                     }
                 },
                 navigationIcon = {
-                    BackButton()
+                    MainDrawerButton()
                 },
                 actions = {
+                    if (selectedNodes == null) {
+                        val label = stringResource(R.string.drawer_new_image)
+                        Tooltip(tooltip = { Text(label) }) {
+                            IconButton(onClick = openNewSession) {
+                                Icon(HugeIcons.Add01, contentDescription = label)
+                            }
+                        }
+                    }
                     if (selectedNodes == null && nodes.itemCount > 0) {
                         val label = stringResource(R.string.media_creation_page_select)
                         Tooltip(tooltip = { Text(label) }) {

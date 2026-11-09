@@ -68,6 +68,7 @@ import me.rerere.ui.toast.ToastType
 import kotlinx.coroutines.launch
 import me.rerere.ai.provider.ModelType
 import me.rerere.hugeicons.HugeIcons
+import me.rerere.hugeicons.stroke.Add01
 import me.rerere.hugeicons.stroke.ArrowDataTransferVertical
 import me.rerere.hugeicons.stroke.ArrowDown01
 import me.rerere.hugeicons.stroke.Cancel01
@@ -82,7 +83,9 @@ import me.rerere.rikkahub.data.datastore.findModelById
 import me.rerere.rikkahub.ui.components.ai.ModelSelector
 import me.rerere.rikkahub.ui.components.ai.TranslationLanguages
 import me.rerere.rikkahub.ui.components.ai.translationLanguageName
-import me.rerere.rikkahub.ui.components.nav.BackButton
+import me.rerere.rikkahub.Screen
+import me.rerere.rikkahub.ui.context.LocalNavController
+import me.rerere.rikkahub.ui.pages.chat.MainDrawerButton
 import me.rerere.rikkahub.ui.components.richtext.MarkdownBlock
 import me.rerere.rikkahub.ui.components.richtext.SelectableContent
 import me.rerere.rikkahub.ui.context.LocalToaster
@@ -107,6 +110,7 @@ fun TranslatorPage(vm: TranslatorVM = koinViewModel(), historyId: String? = null
     val clipboard = LocalClipboard.current
     val toaster = LocalToaster.current
     val scope = rememberCoroutineScope()
+    val navController = LocalNavController.current
     val copiedText = stringResource(R.string.copied)
     val errorText = stringResource(R.string.translator_page_error)
 
@@ -126,9 +130,17 @@ fun TranslatorPage(vm: TranslatorVM = koinViewModel(), historyId: String? = null
                     Text(stringResource(R.string.translator_page_title))
                 },
                 navigationIcon = {
-                    BackButton()
+                    MainDrawerButton()
                 },
                 actions = {
+                    IconButton(
+                        onClick = {
+                            // 看历史记录时新建要换回空白的翻译页，已经是空白页就直接清空
+                            if (historyId != null) navController.clearAndNavigate(Screen.Translator) else vm.reset()
+                        }
+                    ) {
+                        Icon(HugeIcons.Add01, contentDescription = stringResource(R.string.drawer_new_translation))
+                    }
                     ModelSelector(
                         modelId = settings.translateModeId,
                         onSelect = {

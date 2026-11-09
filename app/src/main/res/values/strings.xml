@@ -1790,7 +1790,6 @@
   <string name="drawer_section_chat">Chat</string>
   <string name="drawer_section_image">Images</string>
   <string name="drawer_section_translation">Translate</string>
-  <string name="drawer_new_chat">New chat</string>
   <string name="drawer_new_image">New image</string>
   <string name="drawer_new_translation">New translation</string>
   <string name="drawer_folder_unfiled">Unfiled</string>

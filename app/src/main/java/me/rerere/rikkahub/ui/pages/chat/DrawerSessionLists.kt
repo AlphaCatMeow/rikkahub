@@ -103,13 +103,11 @@ private val DrawerItemHorizontalPadding = 16.dp
 internal val DrawerListSpacing = 8.dp
 
 /**
- * 分区的操作栏：左边是新建按钮，中间是可横向滚动的筛选项，右边是工具按钮。没有筛选项或工具按钮时位置留空，
+ * 分区的操作栏：左边是可横向滚动的筛选项，右边是工具按钮。没有筛选项或工具按钮时位置留空，
  * 高度固定，切换分区时下面的列表不会上下移动。
  */
 @Composable
 internal fun DrawerSectionBar(
-    newLabel: String,
-    onNew: () -> Unit,
     modifier: Modifier = Modifier,
     filters: (LazyListScope.() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
@@ -121,26 +119,6 @@ internal fun DrawerSectionBar(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Surface(
-            onClick = onNew,
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            modifier = Modifier.height(DrawerSectionBarHeight),
-        ) {
-            Row(
-                modifier = Modifier.padding(start = 12.dp, end = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Icon(HugeIcons.Add01, contentDescription = null, modifier = Modifier.size(18.dp))
-                Text(
-                    text = newLabel,
-                    style = MaterialTheme.typography.labelLarge,
-                    maxLines = 1,
-                )
-            }
-        }
         if (filters != null) {
             LazyRow(
                 modifier = Modifier.weight(1f),
@@ -298,6 +276,7 @@ internal fun MediaDrawerList(
     sessions: List<MediaCreationSession>?,
     vm: MediaCreationSessionsVM,
     navController: Navigator,
+    onOpened: () -> Unit,
     listState: LazyListState,
     modifier: Modifier = Modifier,
     header: (@Composable () -> Unit)? = null,
@@ -332,7 +311,8 @@ internal fun MediaDrawerList(
                     title = session.title.ifBlank { untitled },
                     running = session.activeCount > 0,
                     onClick = {
-                        navController.navigate(Screen.MediaCreation(session.id.toString())) { launchSingleTop = true }
+                        navController.clearAndNavigate(Screen.MediaCreation(session.id.toString()))
+                        onOpened()
                     },
                     onRename = { renaming = session },
                     onDelete = { deleting = session },
@@ -365,6 +345,7 @@ internal fun MediaDrawerList(
 internal fun TranslationDrawerList(
     entries: LazyPagingItems<TranslationHistoryEntity>,
     navController: Navigator,
+    onOpened: () -> Unit,
     onDelete: (TranslationHistoryEntity) -> Unit,
     listState: LazyListState,
     modifier: Modifier = Modifier,
@@ -403,7 +384,10 @@ internal fun TranslationDrawerList(
                 }
                 DrawerSessionRow(
                     title = entry.sourceText.lineSequence().firstOrNull { it.isNotBlank() }.orEmpty(),
-                    onClick = { navController.navigate(Screen.TranslationHistory(entry.id)) },
+                    onClick = {
+                        navController.clearAndNavigate(Screen.TranslationHistory(entry.id))
+                        onOpened()
+                    },
                     onDelete = { deleting = entry },
                 )
             }

@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DrawerState
-import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenuGroup
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DropdownMenuPopup
@@ -24,9 +22,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.PermanentNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
@@ -34,9 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.adaptive.currentWindowDpSize
 import androidx.compose.material3.rememberBottomSheetState
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -133,36 +127,8 @@ fun ChatPage(id: Uuid, text: String?, files: List<Uri>, nodeId: Uuid? = null) {
         vm.updateDraftFolder(selectedFolderId)
     }
 
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val softwareKeyboardController = LocalSoftwareKeyboardController.current
-    val focusManager = LocalFocusManager.current
-
-    // Handle back press when drawer is open
-    BackHandler(enabled = drawerState.isOpen) {
-        scope.launch {
-            drawerState.close()
-        }
-    }
-
-    // Clear input focus so popup transitions cannot reopen the keyboard.
-    LaunchedEffect(drawerState.isOpen) {
-        if (drawerState.isOpen) {
-            focusManager.clearFocus(force = true)
-            softwareKeyboardController?.hide()
-        }
-    }
-
-    val windowAdaptiveInfo = currentWindowDpSize()
-    val isBigScreen =
-        windowAdaptiveInfo.width > windowAdaptiveInfo.height && windowAdaptiveInfo.width >= 1100.dp
-
-    // 进入大屏（永久抽屉）模式时重置抽屉状态为关闭，
-    // 避免从横屏旋转回竖屏后，模态抽屉残留为打开状态且无法关闭（#1304）
-    LaunchedEffect(isBigScreen) {
-        if (isBigScreen && drawerState.isOpen) {
-            drawerState.close()
-        }
-    }
+    // 侧边栏由外层 MainShell 统一提供
+    val mainDrawer = LocalMainDrawer.current
 
     val startVoiceMode = rememberVoiceModeStarter(vm, setting)
 
@@ -211,75 +177,24 @@ fun ChatPage(id: Uuid, text: String?, files: List<Uri>, nodeId: Uuid? = null) {
         }
     }
 
-    when {
-        isBigScreen -> {
-            PermanentNavigationDrawer(
-                drawerContent = {
-                    ChatDrawerContent(
-                        navController = navController,
-                        current = conversation,
-                        vm = vm,
-                        settings = setting
-                    )
-                }
-            ) {
-                ChatPageContent(
-                    onStartVoiceMode = startVoiceMode,
-                    inputState = inputState,
-                    loadingJob = loadingJob,
-                    processingStatus = processingStatus,
-                    setting = setting,
-                    conversation = conversation,
-                    drawerState = drawerState,
-                    navController = navController,
-                    vm = vm,
-                    chatListState = chatListState,
-                    assistant = assistant,
-                    currentChatModel = currentChatModel,
-                    bigScreen = true,
-                    errors = errors,
-                    onDismissError = { vm.dismissError(it) },
-                    onClearAllErrors = { vm.clearAllErrors() },
-                )
-            }
-        }
-
-        else -> {
-            ModalNavigationDrawer(
-                drawerState = drawerState,
-                drawerContent = {
-                    ChatDrawerContent(
-                        navController = navController,
-                        current = conversation,
-                        vm = vm,
-                        settings = setting
-                    )
-                }
-            ) {
-                ChatPageContent(
-                    onStartVoiceMode = startVoiceMode,
-                    inputState = inputState,
-                    loadingJob = loadingJob,
-                    processingStatus = processingStatus,
-                    setting = setting,
-                    conversation = conversation,
-                    drawerState = drawerState,
-                    navController = navController,
-                    vm = vm,
-                    chatListState = chatListState,
-                    assistant = assistant,
-                    currentChatModel = currentChatModel,
-                    bigScreen = false,
-                    errors = errors,
-                    onDismissError = { vm.dismissError(it) },
-                    onClearAllErrors = { vm.clearAllErrors() },
-                )
-            }
-            BackHandler(drawerState.isOpen) {
-                scope.launch { drawerState.close() }
-            }
-        }
-    }
+    ChatPageContent(
+        onStartVoiceMode = startVoiceMode,
+        inputState = inputState,
+        loadingJob = loadingJob,
+        processingStatus = processingStatus,
+        setting = setting,
+        conversation = conversation,
+        onOpenDrawer = mainDrawer.open,
+        navController = navController,
+        vm = vm,
+        chatListState = chatListState,
+        assistant = assistant,
+        currentChatModel = currentChatModel,
+        bigScreen = mainDrawer.bigScreen,
+        errors = errors,
+        onDismissError = { vm.dismissError(it) },
+        onClearAllErrors = { vm.clearAllErrors() },
+    )
 }
 
 @Composable
@@ -291,7 +206,7 @@ private fun ChatPageContent(
     setting: Settings,
     bigScreen: Boolean,
     conversation: Conversation,
-    drawerState: DrawerState,
+    onOpenDrawer: () -> Unit,
     navController: Navigator,
     vm: ChatVM,
     chatListState: LazyListState,
@@ -358,7 +273,7 @@ private fun ChatPageContent(
                     chatModel = currentChatModel,
                     conversation = conversation,
                     bigScreen = bigScreen,
-                    drawerState = drawerState,
+                    onOpenDrawer = onOpenDrawer,
                     hazeState = hazeState,
                     showCapsuleBackground = listScrolledUnderTopBar,
                     onNewChat = {
@@ -635,7 +550,7 @@ private fun TopBar(
     assistant: Assistant,
     chatModel: Model?,
     conversation: Conversation,
-    drawerState: DrawerState,
+    onOpenDrawer: () -> Unit,
     bigScreen: Boolean,
     hazeState: HazeState,
     showCapsuleBackground: Boolean,
@@ -663,7 +578,7 @@ private fun TopBar(
                 ) {
                     IconButton(
                         onClick = {
-                            scope.launch { drawerState.open() }
+                            onOpenDrawer()
                         }
                     ) {
                         Icon(HugeIcons.Menu03, "Messages")

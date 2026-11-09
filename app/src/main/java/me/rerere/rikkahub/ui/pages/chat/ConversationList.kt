@@ -65,7 +65,7 @@ sealed class ConversationListItem {
 
 @Composable
 fun ColumnScope.ConversationList(
-    current: Conversation,
+    currentId: Uuid?,
     conversations: LazyPagingItems<ConversationListItem>,
     conversationJobs: Collection<Uuid>,
     listState: LazyListState,
@@ -79,14 +79,14 @@ fun ColumnScope.ConversationList(
     onMoveToAssistant: (Conversation) -> Unit = {},
     onMoveToFolder: (Conversation) -> Unit = {}
 ) {
-    var hasScrolledToCurrent by remember(current.id) { mutableStateOf(false) }
+    var hasScrolledToCurrent by remember(currentId) { mutableStateOf(false) }
     // 列表顶部若放了 header，会话项在 LazyColumn 中的位置要往后挪一位
     val headerCount = if (header != null) 1 else 0
 
-    LaunchedEffect(current.id, conversations.itemCount, hasScrolledToCurrent, autoScrollToCurrent) {
+    LaunchedEffect(currentId, conversations.itemCount, hasScrolledToCurrent, autoScrollToCurrent) {
         if (!autoScrollToCurrent || hasScrolledToCurrent) return@LaunchedEffect
         val itemIndex = conversations.itemSnapshotList.items.indexOfFirst {
-            (it as? ConversationListItem.Item)?.conversation?.id == current.id
+            (it as? ConversationListItem.Item)?.conversation?.id == currentId
         }
         if (itemIndex >= 0) {
             val currentIndex = itemIndex + headerCount
@@ -145,7 +145,7 @@ fun ColumnScope.ConversationList(
                 is ConversationListItem.Item -> {
                     ConversationItem(
                         conversation = item.conversation,
-                        selected = item.conversation.id == current.id,
+                        selected = item.conversation.id == currentId,
                         loading = item.conversation.id in conversationJobs,
                         onClick = onClick,
                         onDelete = onDelete,

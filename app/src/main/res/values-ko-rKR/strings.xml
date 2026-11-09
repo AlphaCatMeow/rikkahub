@@ -1781,7 +1781,6 @@ mDNS 주소: .local 호스트네임을 사용하며, IP를 몰라도 같은 네�
   <string name="drawer_section_chat">채팅</string>
   <string name="drawer_section_image">이미지</string>
   <string name="drawer_section_translation">번역</string>
-  <string name="drawer_new_chat">새 채팅</string>
   <string name="drawer_new_image">새 이미지</string>
   <string name="drawer_new_translation">새 번역</string>
   <string name="drawer_folder_unfiled">미분류</string>

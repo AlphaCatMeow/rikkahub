@@ -99,6 +99,14 @@ class TranslatorVM(
         entry?.let(::restoreHistory)
     }
 
+    // 新建翻译：清空输入和结果
+    fun reset() {
+        cancelTranslation()
+        _inputText.value = ""
+        _translatedText.value = ""
+        loadedHistoryId = null
+    }
+
     fun deleteHistory(entry: TranslationHistoryEntity) {
         viewModelScope.launch { historyRepository.deleteById(entry.id) }
     }
