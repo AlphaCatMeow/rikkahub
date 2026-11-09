@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -147,7 +148,8 @@ internal fun DrawerToolButton(
         modifier = Modifier.size(DrawerSectionBarHeight),
     ) {
         Tooltip(tooltip = { Text(contentDescription) }) {
-            Box(contentAlignment = Alignment.Center) {
+            // Tooltip 不向下传最小尺寸，要撑满按钮图标才会居中
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Icon(icon, contentDescription = contentDescription, modifier = Modifier.size(18.dp))
             }
         }
