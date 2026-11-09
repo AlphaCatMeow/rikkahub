@@ -128,8 +128,6 @@ import me.rerere.ui.components.Tooltip
 import me.rerere.ui.sketch.SketchDialog
 import me.rerere.rikkahub.ui.components.ui.AutoAIIcon
 import me.rerere.rikkahub.ui.components.ui.Tag
-import me.rerere.rikkahub.ui.pages.setting.components.label
-import me.rerere.rikkahub.ui.pages.setting.components.typeName
 import java.io.File
 import kotlin.uuid.Uuid
 
@@ -791,7 +789,7 @@ private fun ModelSheet(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            val name = provider.name.ifEmpty { provider.typeName }
+                            val name = provider.name
                             AutoAIIcon(name = name, modifier = Modifier.size(20.dp))
                             Text(
                                 text = name,

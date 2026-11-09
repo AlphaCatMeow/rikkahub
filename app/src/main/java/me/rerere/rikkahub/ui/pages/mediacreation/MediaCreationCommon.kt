@@ -63,6 +63,12 @@ internal val ImageRole.label: String
         ImageRole.REFERENCE -> stringResource(R.string.media_creation_role_reference)
     }
 
+internal val MediaKind.label: String
+    @Composable get() = when (this) {
+        MediaKind.IMAGE -> stringResource(R.string.media_kind_image)
+        MediaKind.VIDEO -> stringResource(R.string.video)
+    }
+
 internal val MediaCreationStatus.label: String
     @Composable get() = when (this) {
         MediaCreationStatus.PREPARING -> stringResource(R.string.media_creation_status_preparing)

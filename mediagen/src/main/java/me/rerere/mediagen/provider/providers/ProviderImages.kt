@@ -1,6 +1,7 @@
 package me.rerere.mediagen.provider.providers
 
 import me.rerere.mediagen.model.MediaGenerationInput
+import me.rerere.mediagen.provider.MediaGenerationManager
 import java.io.File
 import kotlin.io.encoding.Base64
 import kotlin.math.sqrt
@@ -18,10 +19,11 @@ internal fun String.urlFileExtension(): String? =
 
 /**
  * 把图片输入转成 JSON 接口可直接引用的地址：公网地址和 data URI 原样返回，本地文件读出后编码成 data URI。
- * 会读取整个文件，需要在 IO 线程调用。
+ * 会读取整个文件，需要在 IO 线程调用。预览请求里的占位名原样返回。
  */
 internal fun MediaGenerationInput.Image.toUrlOrDataUri(): String {
     if (REMOTE_PREFIXES.any { url.startsWith(it, ignoreCase = true) }) return url
+    if (url.isPreviewPlaceholder()) return url
     val file = File(url.removePrefix("file://"))
     require(file.exists()) { "Image file does not exist: $url" }
     val mimeType = LOCAL_IMAGE_MIME_TYPES[file.extension.lowercase()]
@@ -43,6 +45,8 @@ private val LOCAL_IMAGE_MIME_TYPES = mapOf(
     "heic" to "image/heic",
     "heif" to "image/heif",
 )
+
+internal fun String.isPreviewPlaceholder(): Boolean = startsWith(MediaGenerationManager.PREVIEW_ASSET_PREFIX)
 
 /**
  * 把公共字段里的 resolution 和 aspectRatio 合成一个 size，给只有尺寸字段、没有比例字段的接口用：

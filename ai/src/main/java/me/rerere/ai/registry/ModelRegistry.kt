@@ -2,6 +2,7 @@ package me.rerere.ai.registry
 
 import me.rerere.ai.provider.Modality
 import me.rerere.ai.provider.ModelAbility
+import me.rerere.ai.provider.ModelType
 
 fun interface ModelData<T> {
     fun getData(modelId: String): T
@@ -764,6 +765,30 @@ object ModelRegistry {
         catalog?.find(modelId)?.contextLength
             ?: resolveModels(modelId).firstNotNullOfOrNull { it.contextLength }
     }
+
+    /** 图像/视频生成模型返回对应类型，认不出来时返回 null（按对话模型处理） */
+    val MODEL_TYPE = ModelData<ModelType?> { modelId ->
+        val id = modelId.lowercase()
+            .substringAfterLast('/')
+            .replace(DATE_SUFFIX, "")
+        when {
+            id in MediaModelCatalog.IMAGE -> ModelType.IMAGE
+            id in MediaModelCatalog.VIDEO -> ModelType.VIDEO
+            // LiteLLM 没收录的厂商型号（带日期、地域后缀的），按模型家族名兜底
+            VIDEO_FAMILY.containsMatchIn(id) -> ModelType.VIDEO
+            IMAGE_FAMILY.containsMatchIn(id) -> ModelType.IMAGE
+            else -> null
+        }
+    }
+
+    // 和 tools/media-models/update.ts 的 normalize 保持一致
+    private val DATE_SUFFIX = Regex("-(\\d{4}-\\d{2}-\\d{2}|\\d{6}|\\d{8})$")
+    private val IMAGE_FAMILY = Regex(
+        "gpt-image|dall-e|imagen|seedream|flux|qwen-image|t2i|stable-diffusion|sdxl|recraft|kolors|cogview|hunyuan-?image|nano-banana|ideogram"
+    )
+    private val VIDEO_FAMILY = Regex(
+        "sora|veo|seedance|t2v|i2v|kling|hailuo|vidu|hunyuan-?video|cogvideo|runway|pixverse|happyhorse"
+    )
 
     private fun resolveModels(modelId: String): List<ModelDefinition> {
         val tokens = tokenize(modelId)

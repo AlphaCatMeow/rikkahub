@@ -10,6 +10,7 @@ import me.rerere.mediagen.model.MediaGenerationInput
 import me.rerere.mediagen.model.MediaGenerationModel
 import me.rerere.mediagen.model.MediaGenerationOutput
 import me.rerere.mediagen.model.MediaGenerationRequest
+import me.rerere.mediagen.model.MediaGenerationRequestPreview
 import me.rerere.mediagen.model.MediaGenerationStatus
 import me.rerere.mediagen.model.MediaGenerationTask
 import me.rerere.mediagen.model.MediaGenerationUsage
@@ -35,7 +36,6 @@ class MiniMaxMediaGenerationProvider(
         model: MediaGenerationModel,
         request: MediaGenerationRequest,
     ): Result<MediaGenerationTask> = runCatching {
-        require(!request.prompt.isNullOrBlank()) { "MiniMax H3 requires a non-empty prompt" }
         val httpRequest = authorizedRequest(
             setting,
             "${setting.baseUrl.trimEnd('/')}/video_generation",
@@ -49,6 +49,16 @@ class MiniMaxMediaGenerationProvider(
             metadata = root,
         )
     }
+
+    override fun preview(
+        setting: MediaGenerationProviderSetting.MiniMax,
+        model: MediaGenerationModel,
+        request: MediaGenerationRequest,
+    ): MediaGenerationRequestPreview = MediaGenerationRequestPreview(
+        method = "POST",
+        url = "${setting.baseUrl.trimEnd('/')}/video_generation",
+        body = buildCreateBody(model, request),
+    )
 
     override suspend fun query(
         setting: MediaGenerationProviderSetting.MiniMax,
@@ -66,6 +76,7 @@ class MiniMaxMediaGenerationProvider(
         model: MediaGenerationModel,
         request: MediaGenerationRequest,
     ): JsonObject = buildJsonObject {
+        require(!request.prompt.isNullOrBlank()) { "MiniMax H3 requires a non-empty prompt" }
         request.extraParameters.forEach { (key, value) -> put(key, value) }
         put("model", model.modelId)
         put("content", buildJsonArray {

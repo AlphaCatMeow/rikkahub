@@ -7,7 +7,6 @@ import kotlinx.serialization.descriptors.elementNames
 import me.rerere.ai.core.ReasoningLevel
 import me.rerere.ai.provider.ProviderSetting
 import me.rerere.asr.ASRProviderSetting
-import me.rerere.mediagen.provider.MediaGenerationProviderSetting
 import me.rerere.rikkahub.data.ai.mcp.McpServerConfig
 import me.rerere.rikkahub.data.model.Assistant
 import me.rerere.rikkahub.data.model.Lorebook
@@ -149,7 +148,6 @@ private val SAMPLE = Settings(
     webDavConfig = WebDavConfig(url = "https://dav.example.com"),
     s3Config = S3Config(bucket = "backup"),
     uploadS3Config = S3Config(bucket = "upload"),
-    mediaGenerationProviders = listOf(MediaGenerationProviderSetting.OpenAI(id = id(9))),
     ttsProviders = DEFAULT_TTS_PROVIDERS.take(1),
     selectedTTSProviderId = id(10),
     defaultTTSPlaybackSpeed = 1.5f,
@@ -202,7 +200,6 @@ private val STORED_KEYS = setOf(
     "webdav_config",
     "s3_config",
     "upload_s3_config",
-    "media_generation_providers",
     "tts_providers",
     "selected_tts_provider",
     "default_tts_playback_speed",

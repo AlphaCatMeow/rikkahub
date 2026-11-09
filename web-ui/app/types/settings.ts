@@ -99,7 +99,7 @@ export interface McpServerConfig {
   [key: string]: unknown;
 }
 
-export type ModelType = "CHAT" | "IMAGE" | "EMBEDDING";
+export type ModelType = "CHAT" | "IMAGE" | "EMBEDDING" | "VIDEO";
 export type ModelModality = "TEXT" | "IMAGE";
 export type ModelAbility = "TOOL" | "REASONING";
 

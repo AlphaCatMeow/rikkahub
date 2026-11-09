@@ -6,8 +6,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
+import me.rerere.mediagen.model.MediaGenerationInput
 import me.rerere.mediagen.model.MediaGenerationModel
 import me.rerere.mediagen.model.MediaGenerationRequest
+import me.rerere.mediagen.model.MediaGenerationRequestPreview
 import me.rerere.mediagen.model.MediaGenerationTask
 import me.rerere.mediagen.model.RemoteMediaModel
 import me.rerere.mediagen.provider.providers.aliyun.AliyunMediaGenerationProvider
@@ -52,6 +54,45 @@ class MediaGenerationManager(
     ): Result<List<RemoteMediaModel>> = withContext(Dispatchers.Default) {
         provider(setting).listModelsUnsafe(setting)
             .map { models -> models.filter { it.kind in setting.supportedKinds } }
+    }
+
+    /**
+     * 给出 [create] 将要发出的请求，不发出网络请求。素材地址按顺序换成 `asset-1`、`asset-2`……，
+     * 不会读取本地文件；适配器的校验照常执行，请求不合法时返回失败。
+     */
+    fun preview(
+        setting: MediaGenerationProviderSetting,
+        model: MediaGenerationModel,
+        request: MediaGenerationRequest,
+    ): Result<MediaGenerationRequestPreview> {
+        if (model.kind !in setting.supportedKinds) {
+            return Result.failure(
+                UnsupportedOperationException("${provider(setting).id} does not support ${model.kind} generation")
+            )
+        }
+        val placeholders = request.copy(
+            inputs = request.inputs.mapIndexed { index, input ->
+                val url = "$PREVIEW_ASSET_PREFIX${index + 1}"
+                when (input) {
+                    is MediaGenerationInput.Image -> input.copy(url = url)
+                    is MediaGenerationInput.Video -> input.copy(url = url)
+                    is MediaGenerationInput.Audio -> input.copy(url = url)
+                    is MediaGenerationInput.Document -> input.copy(url = url)
+                    is MediaGenerationInput.WebPage -> input.copy(url = url)
+                    is MediaGenerationInput.Raw -> input
+                }
+            },
+        )
+        return runCatching { provider(setting).previewUnsafe(setting, model, placeholders) }
+    }
+
+    /** 见 [MediaGenerationProvider.modelParameters]。 */
+    suspend fun modelParameters(
+        setting: MediaGenerationProviderSetting,
+        model: MediaGenerationModel,
+    ): Result<Set<String>?> = withContext(Dispatchers.Default) {
+        if (model.kind !in setting.supportedKinds) return@withContext Result.success(null)
+        provider(setting).modelParametersUnsafe(setting, model)
     }
 
     /**
@@ -131,4 +172,24 @@ class MediaGenerationManager(
         setting: MediaGenerationProviderSetting,
     ): Result<List<RemoteMediaModel>> =
         (this as MediaGenerationProvider<MediaGenerationProviderSetting>).listModels(setting)
+
+    @Suppress("UNCHECKED_CAST")
+    private fun MediaGenerationProvider<*>.previewUnsafe(
+        setting: MediaGenerationProviderSetting,
+        model: MediaGenerationModel,
+        request: MediaGenerationRequest,
+    ): MediaGenerationRequestPreview =
+        (this as MediaGenerationProvider<MediaGenerationProviderSetting>).preview(setting, model, request)
+
+    @Suppress("UNCHECKED_CAST")
+    private suspend fun MediaGenerationProvider<*>.modelParametersUnsafe(
+        setting: MediaGenerationProviderSetting,
+        model: MediaGenerationModel,
+    ): Result<Set<String>?> =
+        (this as MediaGenerationProvider<MediaGenerationProviderSetting>).modelParameters(setting, model)
+
+    companion object {
+        /** 预览里素材地址的前缀，后面跟从 1 开始的序号。 */
+        const val PREVIEW_ASSET_PREFIX = "asset-"
+    }
 }

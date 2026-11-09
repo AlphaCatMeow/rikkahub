@@ -569,6 +569,9 @@ private fun ModelSettingsForm(
             model.copy(
                 modelId = id,
                 displayName = id,
+                // 类型是按旧 ID 自动认出来的，改 ID 后认不出就回到对话模型；手动选的类型保留
+                type = ModelRegistry.MODEL_TYPE.getData(id)
+                    ?: if (model.type == ModelRegistry.MODEL_TYPE.getData(model.modelId)) ModelType.CHAT else model.type,
                 inputModalities = inputModality,
                 outputModalities = outputModality,
                 abilities = abilities
@@ -742,6 +745,7 @@ private fun AddModelButton(
                 val abilities = ModelRegistry.MODEL_ABILITIES.getData(model.modelId)
                 onAddModel(
                     model.copy(
+                        type = ModelRegistry.MODEL_TYPE.getData(model.modelId) ?: model.type,
                         inputModalities = inputModalities,
                         outputModalities = outputModalities,
                         abilities = abilities
@@ -758,6 +762,7 @@ private fun AddModelButton(
                             parentProvider.models.none { existing -> existing.modelId == model.modelId }
                         }.map { model ->
                             model.copy(
+                                type = ModelRegistry.MODEL_TYPE.getData(model.modelId) ?: model.type,
                                 inputModalities = ModelRegistry.MODEL_INPUT_MODALITIES.getData(model.modelId),
                                 outputModalities = ModelRegistry.MODEL_OUTPUT_MODALITIES.getData(model.modelId),
                                 abilities = ModelRegistry.MODEL_ABILITIES.getData(model.modelId)
@@ -978,6 +983,7 @@ private fun ModelPicker(
                                     ) {
                                         val modelMeta = remember(it) {
                                             it.copy(
+                                                type = ModelRegistry.MODEL_TYPE.getData(it.modelId) ?: it.type,
                                                 inputModalities = ModelRegistry.MODEL_INPUT_MODALITIES.getData(it.modelId),
                                                 outputModalities = ModelRegistry.MODEL_OUTPUT_MODALITIES.getData(it.modelId),
                                                 abilities = ModelRegistry.MODEL_ABILITIES.getData(it.modelId),
@@ -1063,6 +1069,7 @@ private fun ModelTypeSelector(
                     ModelType.CHAT -> R.string.setting_provider_page_chat_model
                     ModelType.EMBEDDING -> R.string.setting_provider_page_embedding_model
                     ModelType.IMAGE -> R.string.setting_provider_page_image_model
+                    ModelType.VIDEO -> R.string.setting_provider_page_video_model
                 }
             ),
             selected = selected,

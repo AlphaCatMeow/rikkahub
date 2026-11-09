@@ -96,7 +96,7 @@ fun MediaCreationSessionsPage(vm: MediaCreationSessionsVM = koinViewModel()) {
                 actions = {
                     val label = stringResource(R.string.media_creation_page_provider_settings)
                     Tooltip(tooltip = { Text(label) }) {
-                        IconButton(onClick = { navController.navigate(Screen.SettingMedia) }) {
+                        IconButton(onClick = { navController.navigate(Screen.SettingProvider) }) {
                             Icon(HugeIcons.Settings03, contentDescription = label)
                         }
                     }
@@ -128,7 +128,7 @@ fun MediaCreationSessionsPage(vm: MediaCreationSessionsVM = koinViewModel()) {
             if (hasModels == false) {
                 item(key = "setup") {
                     SetupProvidersCard(
-                        onSetup = { navController.navigate(Screen.SettingMedia) },
+                        onSetup = { navController.navigate(Screen.SettingProvider) },
                         modifier = Modifier.animateItem(),
                     )
                 }

@@ -5,10 +5,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ContainedLoadingIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Icon
@@ -32,6 +34,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import me.rerere.ui.toast.ToastType
 import me.rerere.ai.provider.ClaudePromptCacheTtl
+import me.rerere.ai.provider.MediaApi
+import me.rerere.ai.provider.MediaVendor
 import me.rerere.ai.provider.ProviderSetting
 import me.rerere.ai.provider.ProviderQuota
 import me.rerere.ai.provider.UsageWindow
@@ -42,6 +46,8 @@ import me.rerere.rikkahub.data.ai.account.ChatGPTAuth
 import me.rerere.oauth.CustomTabsOAuthAuthorizationLauncher
 import me.rerere.rikkahub.data.ai.account.ProviderAccountManager
 import me.rerere.rikkahub.data.datastore.DEFAULT_PROVIDERS
+import me.rerere.rikkahub.data.datastore.defaultMediaBaseUrl
+import me.rerere.rikkahub.data.datastore.detectMediaVendor
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.ArrowRight01
 import me.rerere.hugeicons.stroke.Cancel01
@@ -130,6 +136,11 @@ fun ProviderConfigure(
                 plan = null,
                 disclaimer = stringResource(R.string.setting_provider_page_grok_disclaimer),
             )
+        }
+
+        // 模型级覆盖只影响对话请求，媒体接口只在提供商本身上配置
+        if (provider is ProviderSetting.OpenAI && !allowTypeSwitch) {
+            ProviderConfigureMediaApi(provider, onEdit)
         }
     }
 }
@@ -358,6 +369,72 @@ private fun ProviderConfigureOpenAI(
         )
     }
 }
+
+// 创作模式里的图像、视频模型走的接口，和对话共用这个提供商的密钥
+@Composable
+private fun ProviderConfigureMediaApi(
+    provider: ProviderSetting.OpenAI,
+    onEdit: (provider: ProviderSetting) -> Unit
+) {
+    val mediaApi = provider.mediaApi
+    val vendor = mediaApi?.vendor ?: detectMediaVendor(provider.baseUrl)
+
+    CardGroup(title = { Text(stringResource(R.string.setting_provider_page_media_api)) }) {
+        formItem {
+            Text(
+                text = stringResource(R.string.setting_provider_page_media_api_desc),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = mediaApi == null,
+                    onClick = { onEdit(provider.copy(mediaApi = null)) },
+                    label = {
+                        Text("${stringResource(R.string.setting_provider_page_media_api_auto)} · ${vendor.label}")
+                    },
+                )
+                MediaVendor.entries.forEach { option ->
+                    FilterChip(
+                        selected = mediaApi?.vendor == option,
+                        // 换厂商时清掉上一个厂商的地址，回到新厂商的默认值
+                        onClick = { onEdit(provider.copy(mediaApi = (mediaApi ?: MediaApi()).copy(vendor = option, baseUrl = ""))) },
+                        label = { Text(option.label) },
+                    )
+                }
+            }
+        }
+        if (mediaApi != null) {
+            textFieldItem(
+                label = R.string.setting_provider_page_media_base_url,
+                value = mediaApi.baseUrl,
+                onValueChange = { onEdit(provider.copy(mediaApi = mediaApi.copy(baseUrl = it.trim()))) },
+                supportingText = {
+                    Text(
+                        "${stringResource(R.string.setting_provider_page_media_base_url_hint)}: " +
+                            defaultMediaBaseUrl(vendor, provider.baseUrl)
+                    )
+                },
+            )
+            if (vendor == MediaVendor.ALIYUN) {
+                textFieldItem(
+                    label = R.string.setting_provider_page_media_workspace_id,
+                    value = mediaApi.workspaceId,
+                    onValueChange = { onEdit(provider.copy(mediaApi = mediaApi.copy(workspaceId = it.trim()))) },
+                )
+            }
+        }
+    }
+}
+
+private val MediaVendor.label: String
+    @Composable get() = when (this) {
+        MediaVendor.OPENAI -> "OpenAI"
+        MediaVendor.ALIYUN -> stringResource(R.string.media_provider_type_aliyun)
+        MediaVendor.VOLCENGINE -> stringResource(R.string.media_provider_type_volcengine)
+        MediaVendor.MINIMAX -> "MiniMax"
+        MediaVendor.OPENROUTER -> "OpenRouter"
+    }
 
 // 账号类提供商：登录状态、用量和说明
 @Composable

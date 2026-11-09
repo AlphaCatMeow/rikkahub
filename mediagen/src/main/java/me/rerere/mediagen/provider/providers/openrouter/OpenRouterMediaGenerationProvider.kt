@@ -7,6 +7,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import me.rerere.mediagen.model.MediaGenerationModel
 import me.rerere.mediagen.model.MediaGenerationRequest
+import me.rerere.mediagen.model.MediaGenerationRequestPreview
 import me.rerere.mediagen.model.MediaGenerationTask
 import me.rerere.mediagen.model.MediaKind
 import me.rerere.mediagen.model.RemoteMediaModel
@@ -38,6 +39,15 @@ class OpenRouterMediaGenerationProvider(
             MediaKind.IMAGE -> image.create(setting, model, request)
             MediaKind.VIDEO -> video.create(setting, model, request)
         }
+    }
+
+    override fun preview(
+        setting: MediaGenerationProviderSetting.OpenRouter,
+        model: MediaGenerationModel,
+        request: MediaGenerationRequest,
+    ): MediaGenerationRequestPreview = when (model.kind) {
+        MediaKind.IMAGE -> MediaGenerationRequestPreview("POST", "${setting.baseUrl.trimEnd('/')}/images", image.buildBody(model, request))
+        MediaKind.VIDEO -> MediaGenerationRequestPreview("POST", "${setting.baseUrl.trimEnd('/')}/videos", video.buildCreateBody(model, request))
     }
 
     override suspend fun query(

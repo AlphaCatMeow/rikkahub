@@ -11,6 +11,7 @@ import me.rerere.mediagen.model.MediaGenerationInput
 import me.rerere.mediagen.model.MediaGenerationModel
 import me.rerere.mediagen.model.MediaGenerationOutput
 import me.rerere.mediagen.model.MediaGenerationRequest
+import me.rerere.mediagen.model.MediaGenerationRequestPreview
 import me.rerere.mediagen.model.MediaGenerationStatus
 import me.rerere.mediagen.model.MediaGenerationTask
 import me.rerere.mediagen.model.MediaGenerationUsage
@@ -107,7 +108,33 @@ class OpenAIMediaGenerationProvider(
         model: MediaGenerationModel,
         request: MediaGenerationRequest,
     ): MultipartBody {
+        val builder = MultipartBody.Builder().setType(MultipartBody.FORM)
+        buildEditFields(setting, model, request).forEach { (key, value) -> builder.addFormDataPart(key, value) }
+
+        val imageFieldName = editImageFieldName(request)
+        request.inputs.forEach { input ->
+            require(input is MediaGenerationInput.Image)
+            val file = File(input.url.removePrefix("file://"))
+            require(file.exists()) { "Image file does not exist: ${input.url}" }
+            val mediaType = EDIT_IMAGE_MEDIA_TYPES[file.extension.lowercase()]
+                ?: throw IllegalArgumentException("Unsupported image file type for OpenAI edit: ${file.extension}")
+            builder.addFormDataPart(imageFieldName, file.name, file.asRequestBody(mediaType.toMediaType()))
+        }
+        return builder.build()
+    }
+
+    // multipart 里除图片文件以外的表单字段
+    private fun buildEditFields(
+        setting: MediaGenerationProviderSetting.OpenAI,
+        model: MediaGenerationModel,
+        request: MediaGenerationRequest,
+    ): Map<String, String> {
         validate(request)
+        request.inputs.forEach { input ->
+            require(input is MediaGenerationInput.Image) {
+                "OpenAI image generation does not support ${input::class.simpleName} input"
+            }
+        }
         val fields = linkedMapOf<String, String>()
         request.extraParameters.forEach { (key, value) ->
             fields[key] = (value as? JsonPrimitive)?.contentOrNull ?: value.toString()
@@ -116,22 +143,36 @@ class OpenAIMediaGenerationProvider(
         fields["prompt"] = request.prompt.orEmpty()
         request.count?.let { fields["n"] = it.toString() }
         fields += sizeFields(setting, model, request)
+        return fields
+    }
 
-        val builder = MultipartBody.Builder().setType(MultipartBody.FORM)
-        fields.forEach { (key, value) -> builder.addFormDataPart(key, value) }
+    private fun editImageFieldName(request: MediaGenerationRequest): String =
+        if (request.inputs.size == 1) "image" else "image[]"
 
-        val imageFieldName = if (request.inputs.size == 1) "image" else "image[]"
-        request.inputs.forEach { input ->
-            require(input is MediaGenerationInput.Image) {
-                "OpenAI image generation does not support ${input::class.simpleName} input"
-            }
-            val file = File(input.url.removePrefix("file://"))
-            require(file.exists()) { "Image file does not exist: ${input.url}" }
-            val mediaType = EDIT_IMAGE_MEDIA_TYPES[file.extension.lowercase()]
-                ?: throw IllegalArgumentException("Unsupported image file type for OpenAI edit: ${file.extension}")
-            builder.addFormDataPart(imageFieldName, file.name, file.asRequestBody(mediaType.toMediaType()))
+    override fun preview(
+        setting: MediaGenerationProviderSetting.OpenAI,
+        model: MediaGenerationModel,
+        request: MediaGenerationRequest,
+    ): MediaGenerationRequestPreview {
+        val baseUrl = setting.baseUrl.trimEnd('/')
+        if (request.inputs.isEmpty()) {
+            return MediaGenerationRequestPreview(
+                method = "POST",
+                url = "$baseUrl/images/generations",
+                body = buildGenerationBody(setting, model, request),
+            )
         }
-        return builder.build()
+        val fields = buildEditFields(setting, model, request)
+        val images = request.inputs.map { JsonPrimitive((it as MediaGenerationInput.Image).url) }
+        return MediaGenerationRequestPreview(
+            method = "POST",
+            url = "$baseUrl/images/edits",
+            body = JsonObject(
+                fields.mapValues { JsonPrimitive(it.value) } +
+                    (editImageFieldName(request) to (images.singleOrNull() ?: JsonArray(images)))
+            ),
+            multipart = true,
+        )
     }
 
     internal fun parseTask(root: JsonObject, fallbackModel: String? = null): MediaGenerationTask {
@@ -219,6 +260,7 @@ class OpenAIMediaGenerationProvider(
             "image|dall-?e|imagen|flux|seedream|midjourney|stable-diffusion|sdxl|sd3|kolors|recraft|ideogram|cogview|hidream|nano-banana",
             RegexOption.IGNORE_CASE,
         )
+
         // gpt-image-1 / 1.5 只接受这三个尺寸
         val LEGACY_SIZES = mapOf(
             "1:1" to "1024x1024",

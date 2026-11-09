@@ -183,7 +183,7 @@ fun MediaCreationPage(id: String) {
                     if (selectedNodes == null) {
                         val label = stringResource(R.string.media_creation_page_provider_settings)
                         Tooltip(tooltip = { Text(label) }) {
-                            IconButton(onClick = { navController.navigate(Screen.SettingMedia) }) {
+                            IconButton(onClick = { navController.navigate(Screen.SettingProvider) }) {
                                 Icon(HugeIcons.Settings03, contentDescription = label)
                             }
                         }
@@ -214,7 +214,7 @@ fun MediaCreationPage(id: String) {
                     editingNodeId = draft.editingNodeId,
                     selectedNodes = selectedNodes,
                     hasModels = settings.mediaGenerationProviders.any { it.models.isNotEmpty() },
-                    onOpenMediaSettings = { navController.navigate(Screen.SettingMedia) },
+                    onOpenMediaSettings = { navController.navigate(Screen.SettingProvider) },
                 )
             }
             val selected = selectedNodes
@@ -233,7 +233,7 @@ fun MediaCreationPage(id: String) {
                     providers = settings.mediaGenerationProviders,
                     recentOutputs = recentOutputs,
                     uploadConfigured = uploadConfigured,
-                    onOpenMediaSettings = { navController.navigate(Screen.SettingMedia) },
+                    onOpenMediaSettings = { navController.navigate(Screen.SettingProvider) },
                 )
             }
         }

@@ -2,6 +2,7 @@ package me.rerere.mediagen.provider.providers.aliyun
 
 import me.rerere.mediagen.model.MediaGenerationModel
 import me.rerere.mediagen.model.MediaGenerationRequest
+import me.rerere.mediagen.model.MediaGenerationRequestPreview
 import me.rerere.mediagen.model.MediaGenerationTask
 import me.rerere.mediagen.model.MediaKind
 import me.rerere.mediagen.provider.MediaGenerationProvider
@@ -28,6 +29,15 @@ class AliyunMediaGenerationProvider(
             MediaKind.IMAGE -> image.create(setting, model, request)
             MediaKind.VIDEO -> video.create(setting, model, request)
         }
+    }
+
+    override fun preview(
+        setting: MediaGenerationProviderSetting.Aliyun,
+        model: MediaGenerationModel,
+        request: MediaGenerationRequest,
+    ): MediaGenerationRequestPreview = when (model.kind) {
+        MediaKind.IMAGE -> MediaGenerationRequestPreview("POST", "${setting.resolvedBaseUrl()}/services/aigc/multimodal-generation/generation", image.buildBody(model, request))
+        MediaKind.VIDEO -> MediaGenerationRequestPreview("POST", "${setting.resolvedBaseUrl()}/services/aigc/video-generation/video-synthesis", video.buildCreateBody(model, request))
     }
 
     override suspend fun query(

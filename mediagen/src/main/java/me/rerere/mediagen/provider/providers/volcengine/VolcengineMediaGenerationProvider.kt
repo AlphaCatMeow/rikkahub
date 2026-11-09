@@ -2,6 +2,7 @@ package me.rerere.mediagen.provider.providers.volcengine
 
 import me.rerere.mediagen.model.MediaGenerationModel
 import me.rerere.mediagen.model.MediaGenerationRequest
+import me.rerere.mediagen.model.MediaGenerationRequestPreview
 import me.rerere.mediagen.model.MediaGenerationTask
 import me.rerere.mediagen.model.MediaKind
 import me.rerere.mediagen.provider.MediaGenerationProvider
@@ -28,6 +29,15 @@ class VolcengineMediaGenerationProvider(
             MediaKind.IMAGE -> image.create(setting, model, request)
             MediaKind.VIDEO -> video.create(setting, model, request)
         }
+    }
+
+    override fun preview(
+        setting: MediaGenerationProviderSetting.Volcengine,
+        model: MediaGenerationModel,
+        request: MediaGenerationRequest,
+    ): MediaGenerationRequestPreview = when (model.kind) {
+        MediaKind.IMAGE -> MediaGenerationRequestPreview("POST", "${setting.baseUrl.trimEnd('/')}/images/generations", image.buildBody(model, request))
+        MediaKind.VIDEO -> MediaGenerationRequestPreview("POST", "${setting.baseUrl.trimEnd('/')}/contents/generations/tasks", video.buildCreateBody(model, request))
     }
 
     override suspend fun query(

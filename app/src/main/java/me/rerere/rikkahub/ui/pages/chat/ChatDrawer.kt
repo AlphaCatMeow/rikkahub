@@ -328,7 +328,7 @@ fun ChatDrawerContent(
                     DrawerToolButton(
                         icon = HugeIcons.Settings03,
                         contentDescription = stringResource(R.string.media_creation_page_provider_settings),
-                        onClick = { navController.navigate(Screen.SettingMedia) },
+                        onClick = { navController.navigate(Screen.SettingProvider) },
                     )
                 }
 

@@ -76,6 +76,11 @@ object SettingsJsonMigrator {
                 root["providers"] = JsonArray(providers.map(::migrateProviderQuotaQuery))
             }
 
+            // 独立的媒体提供商并入对话提供商（备份是整个 Settings 的序列化，providers 一定在）
+            root.remove("mediaGenerationProviders")?.let { media ->
+                (root["providers"] as? JsonArray)?.let { root["providers"] = mergeMediaProviders(it, media) }
+            }
+
             JsonInstant.encodeToString(JsonObject(root))
         }.onFailure {
             Log.e(TAG, "migrate: Failed to migrate settings JSON, using original", it)

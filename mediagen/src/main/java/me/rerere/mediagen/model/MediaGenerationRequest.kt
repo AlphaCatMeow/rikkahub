@@ -40,3 +40,16 @@ data class MediaGenerationRequest(
         require(seed == null || seed >= 0) { "seed must be non-negative" }
     }
 }
+
+/**
+ * 适配器将要发出的请求，用于在提交前给用户核对。[body] 是 JSON 请求体；multipart 请求（OpenAI 图像编辑）
+ * 把各个表单字段放进 [body]，文件字段的值是素材的占位名。
+ *
+ * 预览里的素材地址都是占位名（`asset-1` 起），不会读取本地文件，也不含 API Key。
+ */
+data class MediaGenerationRequestPreview(
+    val method: String,
+    val url: String,
+    val body: JsonObject,
+    val multipart: Boolean = false,
+)

@@ -48,6 +48,19 @@ val ProviderSetting.supportsBuiltInSearch: Boolean
         is ProviderSetting.Account -> true
     }
 
+/** 图像/视频生成接口的厂商协议。对话和媒体生成共用同一个提供商的密钥 */
+@Serializable
+enum class MediaVendor { OPENAI, ALIYUN, VOLCENGINE, MINIMAX, OPENROUTER }
+
+@Serializable
+data class MediaApi(
+    val vendor: MediaVendor = MediaVendor.OPENAI,
+    // 留空时：百炼、MiniMax 用 baseUrl 所在站点的媒体路径，其他厂商直接用对话的 baseUrl
+    val baseUrl: String = "",
+    // 百炼按业务空间分配的域名里 {WorkspaceId} 占位符的值
+    val workspaceId: String = "",
+)
+
 @Serializable
 sealed class ProviderSetting {
     abstract val id: Uuid
@@ -103,6 +116,8 @@ sealed class ProviderSetting {
         var useResponseApi: Boolean = false,
         var includeHistoryReasoning: Boolean = true,
         var responsesPath: String = "/responses",
+        // 图像/视频模型走的接口；为空时按 baseUrl 的域名判断，中转站需要手动指定
+        val mediaApi: MediaApi? = null,
     ) : ApiKey() {
         override fun withQuotaQuery(query: QuotaQuery): ApiKey = copy(quotaQuery = query)
 
