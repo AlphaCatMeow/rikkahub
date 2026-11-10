@@ -58,7 +58,7 @@ class OpenAIMediaGenerationProvider(
         } else {
             builder.url("$baseUrl/images/edits").post(buildEditBody(setting, model, request))
         }.build()
-        parseTask(client.executeJson(httpRequest, id), model.modelId)
+        parseTask(client.executeJson(httpRequest, id), model.modelId, request.outputFormat)
     }
 
     override val supportsModelListing: Boolean get() = true
@@ -175,8 +175,13 @@ class OpenAIMediaGenerationProvider(
         )
     }
 
-    internal fun parseTask(root: JsonObject, fallbackModel: String? = null): MediaGenerationTask {
-        val defaultFormat = root.string("output_format")
+    internal fun parseTask(
+        root: JsonObject,
+        fallbackModel: String? = null,
+        requestedFormat: String? = null,
+    ): MediaGenerationTask {
+        // 有的中转响应里不带 output_format，按请求的格式算，否则 gif / svg 会被存成 png
+        val defaultFormat = root.string("output_format") ?: requestedFormat
         val data = root["data"] as? JsonArray ?: error("OpenAI response does not contain data")
         return MediaGenerationTask(
             // 同步接口没有服务端任务 ID
@@ -245,6 +250,9 @@ class OpenAIMediaGenerationProvider(
             size?.let { fields["size"] = it }
         }
         request.quality?.takeIf(String::isNotBlank)?.let { fields["quality"] = it }
+        // complexity 是 gpt-image-2.6 加的，gif / svg 也只有 2.6 能出
+        request.complexity?.takeIf(String::isNotBlank)?.let { fields["complexity"] = it }
+        request.outputFormat?.takeIf(String::isNotBlank)?.let { fields["output_format"] = it }
         return fields
     }
 

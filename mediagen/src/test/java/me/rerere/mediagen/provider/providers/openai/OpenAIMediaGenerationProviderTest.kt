@@ -96,6 +96,27 @@ class OpenAIMediaGenerationProviderTest {
     }
 
     @Test
+    fun generationBodySendsComplexityAndOutputFormatOnlyWhenSet() {
+        val provider = OpenAIMediaGenerationProvider(OkHttpClient())
+        val plain = provider.buildGenerationBody(setting, model, MediaGenerationRequest(prompt = "cat"))
+        assertNull(plain["complexity"])
+        assertNull(plain["output_format"])
+
+        val body = provider.buildGenerationBody(
+            setting,
+            model.copy(modelId = "gpt-image-2.6-flare"),
+            MediaGenerationRequest(prompt = "cat", quality = "xhigh", complexity = "low", outputFormat = "gif"),
+        )
+        assertEquals(JsonPrimitive("xhigh"), body["quality"])
+        assertEquals(JsonPrimitive("low"), body["complexity"])
+        assertEquals(JsonPrimitive("gif"), body["output_format"])
+
+        val root = mediaGenerationJson.parseToJsonElement("""{"data":[{"b64_json":"AAAA"}]}""").jsonObject
+        assertEquals("image/gif", provider.parseTask(root, requestedFormat = "gif").outputs.single().mimeType)
+        assertEquals("image/svg+xml", provider.parseTask(root, requestedFormat = "svg").outputs.single().mimeType)
+    }
+
+    @Test
     fun generationBodyOmitsAutoSizeAndGrokSize() {
         val provider = OpenAIMediaGenerationProvider(OkHttpClient())
 

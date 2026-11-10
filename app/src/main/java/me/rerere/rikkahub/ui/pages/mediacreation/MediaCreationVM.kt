@@ -246,7 +246,11 @@ class MediaCreationVM(
             previous.model.kind == model.kind
         draft.copy(
             modelId = model.id,
-            params = if (sameShape) draft.params else MediaCreationParams(),
+            params = when {
+                !sameShape -> MediaCreationParams()
+                model.isGptImage26 -> draft.params
+                else -> draft.params.copy(complexity = null, outputFormat = null)
+            },
             assets = draft.assets.supportedBy(capabilities),
         )
     }

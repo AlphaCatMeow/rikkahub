@@ -1791,6 +1791,11 @@
   <string name="media_creation_page_param_quality">Качество</string>
   <string name="media_creation_page_param_quality_hint">напр. high</string>
   <string name="media_creation_page_summary_quality">Качество %1$s</string>
+  <string name="media_creation_page_param_complexity">Сложность</string>
+  <string name="media_creation_page_param_complexity_hint">напр. high</string>
+  <string name="media_creation_page_summary_complexity">Сложность %1$s</string>
+  <string name="media_creation_page_param_output_format">Формат вывода</string>
+  <string name="media_creation_page_param_output_format_hint">напр. png</string>
   <string name="background_tasks_running">Фоновые задачи: %1$d в работе</string>
   <string name="background_tasks_title">Фоновые задачи</string>
   <string name="background_tasks_empty">В этом диалоге нет фоновых задач</string>

@@ -105,6 +105,8 @@ internal class OpenRouterImageGeneration(
         require(request.durationSeconds == null) { "OpenRouter image generation does not expose duration" }
         require(request.generateAudio == null) { "OpenRouter image generation does not expose generateAudio" }
         require(request.watermark == null) { "OpenRouter image generation does not expose watermark" }
+        require(request.complexity == null) { "OpenRouter image generation does not expose complexity" }
+        require(request.outputFormat == null) { "OpenRouter image generation does not expose output format" }
         require(request.promptEnhancement == null) {
             "OpenRouter image generation does not expose prompt enhancement"
         }

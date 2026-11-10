@@ -951,6 +951,26 @@ private fun ParamsSheet(
                     onValueChange = { update(current.copy(quality = it)) },
                 )
             }
+            if (MediaGenerationParameter.COMPLEXITY in supported && selection.model.isGptImage26) {
+                TextParam(
+                    label = stringResource(R.string.media_creation_page_param_complexity),
+                    value = current.complexity,
+                    presets = presets.complexities,
+                    default = null,
+                    placeholder = stringResource(R.string.media_creation_page_param_complexity_hint),
+                    onValueChange = { update(current.copy(complexity = it)) },
+                )
+            }
+            if (MediaGenerationParameter.OUTPUT_FORMAT in supported && selection.model.isGptImage26) {
+                TextParam(
+                    label = stringResource(R.string.media_creation_page_param_output_format),
+                    value = current.outputFormat,
+                    presets = presets.outputFormats,
+                    default = null,
+                    placeholder = stringResource(R.string.media_creation_page_param_output_format_hint),
+                    onValueChange = { update(current.copy(outputFormat = it)) },
+                )
+            }
             if (MediaGenerationParameter.DURATION in supported) {
                 NumberParam(
                     label = stringResource(R.string.media_creation_page_param_duration),

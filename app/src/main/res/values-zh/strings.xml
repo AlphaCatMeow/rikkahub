@@ -1802,6 +1802,11 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="media_creation_page_param_quality">质量</string>
   <string name="media_creation_page_param_quality_hint">例如 high</string>
   <string name="media_creation_page_summary_quality">质量 %1$s</string>
+  <string name="media_creation_page_param_complexity">复杂度</string>
+  <string name="media_creation_page_param_complexity_hint">例如 high</string>
+  <string name="media_creation_page_summary_complexity">复杂度 %1$s</string>
+  <string name="media_creation_page_param_output_format">输出格式</string>
+  <string name="media_creation_page_param_output_format_hint">例如 png</string>
   <string name="background_tasks_running">后台任务：%1$d 个运行中</string>
   <string name="background_tasks_title">后台任务</string>
   <string name="background_tasks_empty">此对话中没有后台任务</string>

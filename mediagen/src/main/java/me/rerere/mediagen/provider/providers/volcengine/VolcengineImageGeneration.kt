@@ -120,6 +120,8 @@ internal class VolcengineImageGeneration(
             "Volcengine generates one image per request; use sequential_image_generation in extraParameters for image sets"
         }
         require(request.quality == null) { "Volcengine image generation does not expose quality" }
+        require(request.complexity == null) { "Volcengine image generation does not expose complexity" }
+        require(request.outputFormat == null) { "Volcengine image generation does not expose output format" }
         require(request.durationSeconds == null) { "Volcengine image generation does not expose duration" }
         require(request.generateAudio == null) { "Volcengine image generation does not expose generateAudio" }
         require(request.seed == null) { "Volcengine image generation does not expose seed" }

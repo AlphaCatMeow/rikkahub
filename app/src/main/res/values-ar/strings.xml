@@ -1789,6 +1789,11 @@
   <string name="media_creation_page_param_quality">الجودة</string>
   <string name="media_creation_page_param_quality_hint">مثال: high</string>
   <string name="media_creation_page_summary_quality">الجودة %1$s</string>
+  <string name="media_creation_page_param_complexity">التعقيد</string>
+  <string name="media_creation_page_param_complexity_hint">مثال: high</string>
+  <string name="media_creation_page_summary_complexity">التعقيد %1$s</string>
+  <string name="media_creation_page_param_output_format">صيغة الإخراج</string>
+  <string name="media_creation_page_param_output_format_hint">مثال: png</string>
   <string name="background_tasks_running">المهام في الخلفية: %1$d قيد التشغيل</string>
   <string name="background_tasks_title">المهام في الخلفية</string>
   <string name="background_tasks_empty">لا توجد مهام خلفية في هذه المحادثة</string>

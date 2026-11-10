@@ -109,6 +109,8 @@ internal class OpenRouterVideoGeneration(
         require(request.count == null || request.count == 1) { "OpenRouter generates one video per job" }
         require(request.watermark == null) { "OpenRouter does not expose watermark in the video generation API" }
         require(request.quality == null) { "OpenRouter does not expose quality in the video generation API" }
+        require(request.complexity == null) { "OpenRouter does not expose complexity" }
+        require(request.outputFormat == null) { "OpenRouter does not expose output format" }
         require(request.promptEnhancement == null) {
             "OpenRouter does not expose prompt enhancement in the video generation API"
         }

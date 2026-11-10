@@ -119,6 +119,8 @@ internal class AliyunVideoGeneration(
         })
         require(request.count == null || request.count == 1) { "Aliyun generates one video per task" }
         require(request.quality == null) { "Aliyun video generation does not expose quality" }
+        require(request.complexity == null) { "Aliyun video generation does not expose complexity" }
+        require(request.outputFormat == null) { "Aliyun video generation does not expose output format" }
         require(request.callbackUrl == null) {
             "Aliyun uses account-level asynchronous callbacks instead of a callback_url request field"
         }

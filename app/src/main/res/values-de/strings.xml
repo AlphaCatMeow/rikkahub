@@ -1792,6 +1792,11 @@
   <string name="media_creation_page_param_quality">Qualität</string>
   <string name="media_creation_page_param_quality_hint">z. B. high</string>
   <string name="media_creation_page_summary_quality">Qualität %1$s</string>
+  <string name="media_creation_page_param_complexity">Komplexität</string>
+  <string name="media_creation_page_param_complexity_hint">z. B. high</string>
+  <string name="media_creation_page_summary_complexity">Komplexität %1$s</string>
+  <string name="media_creation_page_param_output_format">Ausgabeformat</string>
+  <string name="media_creation_page_param_output_format_hint">z. B. png</string>
   <string name="background_tasks_running">Hintergrundaufgaben: %1$d laufen</string>
   <string name="background_tasks_title">Hintergrundaufgaben</string>
   <string name="background_tasks_empty">Keine Hintergrundaufgaben in dieser Unterhaltung</string>

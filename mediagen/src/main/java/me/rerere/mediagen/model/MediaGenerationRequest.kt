@@ -21,6 +21,10 @@ data class MediaGenerationRequest(
     val resolution: String? = null,
     val aspectRatio: String? = null,
     val quality: String? = null,
+    // 出图前做规划的力度（OpenAI 的 low / medium / high），和质量相互独立
+    val complexity: String? = null,
+    // 产出的文件格式（png、webp、gif、svg）
+    val outputFormat: String? = null,
     val durationSeconds: Int? = null,
     val generateAudio: Boolean? = null,
     val watermark: Boolean? = null,

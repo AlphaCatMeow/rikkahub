@@ -18,6 +18,12 @@ enum class MediaGenerationParameter {
     /** [MediaGenerationRequest.quality]：图像质量档位（`low`、`high`），取值由厂商决定。 */
     QUALITY,
 
+    /** [MediaGenerationRequest.complexity]：出图前做规划的力度（`low`、`high`），和质量相互独立。 */
+    COMPLEXITY,
+
+    /** [MediaGenerationRequest.outputFormat]：产出的文件格式（`png`、`gif`、`svg`）。 */
+    OUTPUT_FORMAT,
+
     /** [MediaGenerationRequest.durationSeconds]：视频时长，`-1` 表示交给模型决定。 */
     DURATION,
 
@@ -95,6 +101,8 @@ private val OPENAI_IMAGE = MediaGenerationCapabilities(
         MediaGenerationParameter.RESOLUTION,
         MediaGenerationParameter.ASPECT_RATIO,
         MediaGenerationParameter.QUALITY,
+        MediaGenerationParameter.COMPLEXITY,
+        MediaGenerationParameter.OUTPUT_FORMAT,
     ),
     imageRoles = REFERENCE_ONLY,
     requiresPrompt = true,

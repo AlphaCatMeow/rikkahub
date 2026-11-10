@@ -47,6 +47,7 @@ import kotlinx.coroutines.withContext
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.Play
 import me.rerere.mediagen.model.ImageRole
+import me.rerere.mediagen.model.MediaGenerationModel
 import me.rerere.mediagen.model.MediaKind
 import me.rerere.mediagen.provider.MediaGenerationProviderSetting
 import me.rerere.rikkahub.R
@@ -89,6 +90,8 @@ internal fun MediaCreationParams.summary(kind: MediaKind): List<String> = listOf
     aspectRatio,
     resolution,
     quality?.let { stringResource(R.string.media_creation_page_summary_quality, it) },
+    complexity?.let { stringResource(R.string.media_creation_page_summary_complexity, it) },
+    outputFormat,
     durationSeconds?.let {
         if (it == AUTO_DURATION) {
             stringResource(R.string.media_creation_page_summary_auto_duration)
@@ -130,6 +133,12 @@ internal fun MediaCreationParams.summary(kind: MediaKind): List<String> = listOf
 )
 
 /**
+ * 复杂度和输出格式只有 gpt-image-2.6 认，别的模型带上会被接口拒绝，所以只对它显示、换到别的模型时清掉。
+ * shortcut: 按模型名判断，中转站改了模型名就不显示；需要时改成按模型声明能力。
+ */
+internal val MediaGenerationModel.isGptImage26: Boolean get() = "gpt-image-2.6" in modelId
+
+/**
  * 各厂商常用的参数取值，只是输入时的快捷选项：模型之间的差异很大，实际能用哪些值以接口为准，
  * 列表里没有的可以手动输入。
  */
@@ -137,6 +146,8 @@ internal data class MediaCreationPresets(
     val resolutions: List<String> = emptyList(),
     val aspectRatios: List<String> = emptyList(),
     val qualities: List<String> = emptyList(),
+    val complexities: List<String> = emptyList(),
+    val outputFormats: List<String> = emptyList(),
     val durations: List<Int> = emptyList(),
     val counts: List<Int> = emptyList(),
 ) {
@@ -157,7 +168,10 @@ internal fun MediaGenerationProviderSetting.presets(kind: MediaKind): MediaCreat
     is MediaGenerationProviderSetting.OpenAI -> MediaCreationPresets(
         resolutions = listOf("1024x1024", "1536x1024", "1024x1536", "1K", "2K", "2048x2048", "3840x2160", "2160x3840"),
         aspectRatios = IMAGE_ASPECT_RATIOS,
-        qualities = listOf("auto", "low", "medium", "high"),
+        // xhigh / max 是 gpt-image-2.5 起才有的；复杂度和 gif / svg 是 gpt-image-2.6 才有的，svg 一次只能出一张
+        qualities = listOf("auto", "low", "medium", "high", "xhigh", "max"),
+        complexities = listOf("low", "medium", "high"),
+        outputFormats = listOf("png", "jpeg", "webp", "gif", "svg"),
         counts = IMAGE_COUNTS,
     )
 

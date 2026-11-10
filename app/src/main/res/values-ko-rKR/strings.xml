@@ -1791,6 +1791,11 @@ mDNS 주소: .local 호스트네임을 사용하며, IP를 몰라도 같은 네�
   <string name="media_creation_page_param_quality">품질</string>
   <string name="media_creation_page_param_quality_hint">예: high</string>
   <string name="media_creation_page_summary_quality">품질 %1$s</string>
+  <string name="media_creation_page_param_complexity">복잡도</string>
+  <string name="media_creation_page_param_complexity_hint">예: high</string>
+  <string name="media_creation_page_summary_complexity">복잡도 %1$s</string>
+  <string name="media_creation_page_param_output_format">출력 형식</string>
+  <string name="media_creation_page_param_output_format_hint">예: png</string>
   <string name="background_tasks_running">백그라운드 작업: %1$d개 실행 중</string>
   <string name="background_tasks_title">백그라운드 작업</string>
   <string name="background_tasks_empty">이 대화에는 백그라운드 작업이 없습니다</string>

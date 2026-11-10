@@ -135,6 +135,8 @@ class MiniMaxMediaGenerationProvider(
         require(request.seed == null) { "MiniMax H3 does not expose seed" }
         require(request.promptEnhancement == null) { "MiniMax H3 does not expose prompt enhancement" }
         require(request.quality == null) { "MiniMax H3 does not expose quality" }
+        require(request.complexity == null) { "MiniMax H3 does not expose complexity" }
+        require(request.outputFormat == null) { "MiniMax H3 does not expose output format" }
     }
 
     internal fun parseTask(root: JsonObject): MediaGenerationTask {

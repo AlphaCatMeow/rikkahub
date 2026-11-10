@@ -112,6 +112,8 @@ internal class VolcengineVideoGeneration(
         request.seed?.let { put("seed", it) }
         require(request.count == null || request.count == 1) { "Volcengine generates one video per task" }
         require(request.quality == null) { "Volcengine video generation does not expose quality" }
+        require(request.complexity == null) { "Volcengine video generation does not expose complexity" }
+        require(request.outputFormat == null) { "Volcengine video generation does not expose output format" }
         require(request.promptEnhancement == null) {
             "Volcengine does not expose prompt enhancement in the video generation API"
         }

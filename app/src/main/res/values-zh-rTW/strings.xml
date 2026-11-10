@@ -1789,6 +1789,11 @@
   <string name="media_creation_page_param_quality">品質</string>
   <string name="media_creation_page_param_quality_hint">例如 high</string>
   <string name="media_creation_page_summary_quality">品質 %1$s</string>
+  <string name="media_creation_page_param_complexity">複雜度</string>
+  <string name="media_creation_page_param_complexity_hint">例如 high</string>
+  <string name="media_creation_page_summary_complexity">複雜度 %1$s</string>
+  <string name="media_creation_page_param_output_format">輸出格式</string>
+  <string name="media_creation_page_param_output_format_hint">例如 png</string>
   <string name="background_tasks_running">背景任務：%1$d 個執行中</string>
   <string name="background_tasks_title">背景任務</string>
   <string name="background_tasks_empty">此對話中沒有背景任務</string>

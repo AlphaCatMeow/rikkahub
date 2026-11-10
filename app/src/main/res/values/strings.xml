@@ -1800,6 +1800,11 @@
   <string name="media_creation_page_param_quality">Quality</string>
   <string name="media_creation_page_param_quality_hint">e.g. high</string>
   <string name="media_creation_page_summary_quality">Quality %1$s</string>
+  <string name="media_creation_page_param_complexity">Complexity</string>
+  <string name="media_creation_page_param_complexity_hint">e.g. high</string>
+  <string name="media_creation_page_summary_complexity">Complexity %1$s</string>
+  <string name="media_creation_page_param_output_format">Output format</string>
+  <string name="media_creation_page_param_output_format_hint">e.g. png</string>
   <string name="background_tasks_running">Background tasks: %1$d running</string>
   <string name="background_tasks_title">Background tasks</string>
   <string name="background_tasks_empty">No background tasks in this conversation</string>

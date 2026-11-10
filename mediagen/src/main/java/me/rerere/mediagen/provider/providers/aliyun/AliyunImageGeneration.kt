@@ -122,6 +122,8 @@ internal class AliyunImageGeneration(
     private fun validate(request: MediaGenerationRequest) {
         require(!request.prompt.isNullOrBlank()) { "Aliyun image generation requires a non-empty prompt" }
         require(request.quality == null) { "Aliyun image generation does not expose quality" }
+        require(request.complexity == null) { "Aliyun image generation does not expose complexity" }
+        require(request.outputFormat == null) { "Aliyun image generation does not expose output format" }
         require(request.durationSeconds == null) { "Aliyun image generation does not expose duration" }
         require(request.generateAudio == null) { "Aliyun image generation does not expose generateAudio" }
         require(request.callbackUrl == null) { "Aliyun image generation returns results synchronously" }

@@ -1791,6 +1791,11 @@ mDNSアドレス: .localホスト名を使用し、IPを知らなくても同じ
   <string name="media_creation_page_param_quality">品質</string>
   <string name="media_creation_page_param_quality_hint">例: high</string>
   <string name="media_creation_page_summary_quality">品質 %1$s</string>
+  <string name="media_creation_page_param_complexity">複雑度</string>
+  <string name="media_creation_page_param_complexity_hint">例: high</string>
+  <string name="media_creation_page_summary_complexity">複雑度 %1$s</string>
+  <string name="media_creation_page_param_output_format">出力形式</string>
+  <string name="media_creation_page_param_output_format_hint">例: png</string>
   <string name="background_tasks_running">バックグラウンドタスク: %1$d件実行中</string>
   <string name="background_tasks_title">バックグラウンドタスク</string>
   <string name="background_tasks_empty">この会話にはバックグラウンドタスクはありません</string>
