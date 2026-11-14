@@ -56,6 +56,9 @@ fun SettingPreferencesPage() {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
+                SettingAppLanguagePreference()
+            }
+            item {
                 val containerColor = MaterialTheme.colorScheme.primaryContainer
                 val contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 CardGroup {

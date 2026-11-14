@@ -1826,4 +1826,8 @@
   <string name="chat_page_select_all">Выбрать все</string>
   <string name="chat_page_deselect_all">Снять все</string>
   <string name="chat_page_clear_selection">Снять выделение</string>
+  <string name="setting_page_language">Язык приложения</string>
+  <string name="setting_page_language_system">Как в системе</string>
+  <string name="setting_page_app_language">Язык приложения</string>
+  <string name="setting_page_language_follow_system">Как в системе</string>
 </resources>

@@ -1824,4 +1824,8 @@
   <string name="chat_page_select_all">全選</string>
   <string name="chat_page_deselect_all">取消全選</string>
   <string name="chat_page_clear_selection">清除選取</string>
+  <string name="setting_page_language">應用程式語言</string>
+  <string name="setting_page_language_system">跟隨系統</string>
+  <string name="setting_page_app_language">應用程式語言</string>
+  <string name="setting_page_language_follow_system">跟隨系統</string>
 </resources>

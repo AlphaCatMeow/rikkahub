@@ -1,11 +1,8 @@
 package me.rerere.rikkahub.ui.pages.setting
 
+import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,14 +10,12 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -40,12 +35,14 @@ import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.FloatingToolbarDefaults.ScreenOffset
 import androidx.compose.material3.FloatingToolbarDefaults.floatingToolbarVerticalNestedScroll
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -60,6 +57,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -79,6 +77,7 @@ import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.rerere.ui.toast.ToastType
 import kotlin.uuid.Uuid
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import me.rerere.ai.provider.BuiltInTools
@@ -96,6 +95,7 @@ import me.rerere.ai.ui.UIMessage
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.Add01
 import me.rerere.hugeicons.stroke.ArrowDown01
+import me.rerere.hugeicons.stroke.ArrowLeft01
 import me.rerere.hugeicons.stroke.Cancel01
 import me.rerere.hugeicons.stroke.Connect
 import me.rerere.hugeicons.stroke.Delete01
@@ -113,7 +113,6 @@ import me.rerere.rikkahub.ui.components.ai.ModelModalityTag
 import me.rerere.rikkahub.ui.components.ai.ModelSelector
 import me.rerere.rikkahub.ui.components.ai.ModelTypeTag
 import me.rerere.rikkahub.ui.components.ai.ProviderQuotaText
-import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.ui.AutoAIIcon
 import me.rerere.rikkahub.ui.components.ui.CardGroup
 import me.rerere.rikkahub.ui.components.ui.ConnectedChoiceButtons
@@ -181,8 +180,10 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
     val pager = rememberPagerState { ProviderDetailTab.entries.size }
     val toaster = LocalToaster.current
     val context = LocalContext.current
+    var editedProvider by remember(provider) { mutableStateOf(provider) }
 
     val onEdit = { newProvider: ProviderSetting ->
+        editedProvider = newProvider
         vm.updateSettings { latest ->
             latest.copy(
                 providers = latest.providers.map {
@@ -195,6 +196,24 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
             )
         }
     }
+    val saveConfiguration = {
+        if (editedProvider != provider) {
+            onEdit(editedProvider.copyProvider(name = editedProvider.name.trim()))
+        }
+    }
+    val navigateBack = {
+        saveConfiguration()
+        navController.popBackStack()
+        Unit
+    }
+
+    BackHandler(enabled = editedProvider != provider, onBack = navigateBack)
+    LaunchedEffect(pager.targetPage) {
+        if (pager.targetPage != ProviderDetailTab.CONFIG.ordinal) {
+            saveConfiguration()
+        }
+    }
+
     val onDelete = {
         vm.updateSettings { latest ->
             latest.copy(providers = latest.providers.filter { it.id != provider.id })
@@ -207,7 +226,15 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
         topBar = {
             TopAppBar(
                 navigationIcon = {
-                    BackButton()
+                    FilledTonalIconButton(
+                        onClick = navigateBack,
+                        shapes = IconButtonDefaults.shapes(),
+                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                            containerColor = CustomColors.listItemColors.containerColor
+                        ),
+                    ) {
+                        Icon(HugeIcons.ArrowLeft01, stringResource(R.string.back))
+                    }
                 },
                 colors = CustomColors.topBarColors,
                 title = {
@@ -258,9 +285,11 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
                 when (ProviderDetailTab.entries[page]) {
                     ProviderDetailTab.CONFIG -> {
                         SettingProviderConfigPage(
-                            provider = provider,
-                            onEdit = {
-                                onEdit(it)
+                            provider = editedProvider,
+                            savedProvider = provider,
+                            onEdit = { editedProvider = it },
+                            onSave = {
+                                saveConfiguration()
                                 toaster.show(
                                     context.getString(R.string.setting_provider_page_save_success),
                                     type = ToastType.Success
@@ -274,14 +303,14 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
 
                     ProviderDetailTab.MODELS -> {
                         SettingProviderModelPage(
-                            provider = provider,
+                            provider = editedProvider,
                             onEdit = onEdit
                         )
                     }
 
                     ProviderDetailTab.ADVANCED -> {
                         SettingProviderAdvancedPage(
-                            provider = provider,
+                            provider = editedProvider,
                             onEdit = onEdit
                         )
                     }
@@ -294,47 +323,40 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
 @Composable
 private fun SettingProviderConfigPage(
     provider: ProviderSetting,
+    savedProvider: ProviderSetting,
     onEdit: (ProviderSetting) -> Unit,
+    onSave: () -> Unit,
     onDelete: () -> Unit
 ) {
-    var internalProvider by remember(provider) { mutableStateOf(provider) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var expanded by rememberSaveable { mutableStateOf(true) }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .imePadding()
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .floatingToolbarVerticalNestedScroll(
-                    expanded = expanded,
-                    onExpand = { expanded = true },
-                    onCollapse = { expanded = false },
-                )
+                .fillMaxWidth()
+                .weight(1f)
                 .verticalScroll(rememberScrollState())
-                // 底部留出悬浮工具栏的位置
-                .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 128.dp),
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             ProviderConfigure(
-                provider = internalProvider,
-                onEdit = {
-                    internalProvider = it
-                }
+                provider = provider,
+                onEdit = onEdit
             )
 
             // 账号类的额度查询写死在 Provider 里，没有这一项
-            (internalProvider as? ProviderSetting.ApiKey)?.let { apiKeyProvider ->
+            (provider as? ProviderSetting.ApiKey)?.let { apiKeyProvider ->
                 SettingProviderQuotaQuery(
                     provider = apiKeyProvider,
                     // 额度按已保存的配置查，没开就不留这一行
-                    supportingContent = if (provider.supportsQuota) {
-                        { ProviderQuotaText(providerSetting = provider) }
+                    supportingContent = if (savedProvider.supportsQuota) {
+                        { ProviderQuotaText(providerSetting = savedProvider) }
                     } else null,
-                    onEdit = { internalProvider = apiKeyProvider.withQuotaQuery(it) }
+                    onEdit = { onEdit(apiKeyProvider.withQuotaQuery(it)) }
                 )
             }
 
@@ -348,56 +370,26 @@ private fun SettingProviderConfigPage(
             }
         }
 
-        // 键盘弹出时收起，不然会盖住正在输入的那一行
-        AnimatedVisibility(
-            visible = !WindowInsets.isImeVisible,
+        HorizontalFloatingToolbar(
+            expanded = true,
+            colors = CustomColors.floatingToolbarColors,
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .offset(y = -ScreenOffset),
-            enter = fadeIn() + scaleIn(initialScale = 0.8f),
-            exit = fadeOut() + scaleOut(targetScale = 0.8f),
-        ) {
-            HorizontalFloatingToolbar(
-                expanded = expanded,
-                colors = CustomColors.floatingToolbarColors,
-                leadingContent = {
-                    ProviderConnectionTester(
-                        internalProvider = internalProvider,
-                    )
+                .align(Alignment.CenterHorizontally)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            leadingContent = {
+                ProviderConnectionTester(internalProvider = provider)
 
-                    if (!internalProvider.builtIn) {
-                        IconButton(
-                            onClick = {
-                                showDeleteDialog = true
-                            },
-                        ) {
-                            Icon(HugeIcons.Delete01, stringResource(R.string.delete))
-                        }
-                    }
-                },
-            ) {
-                Button(
-                    onClick = {
-                        val providerToSave: ProviderSetting = internalProvider
-                        onEdit(providerToSave.copyProvider(name = providerToSave.name.trim()))
-                    }
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            HugeIcons.FloppyDisk,
-                            contentDescription = stringResource(R.string.setting_provider_page_save)
-                        )
-                        AnimatedVisibility(expanded) {
-                            Row {
-                                Spacer(modifier = Modifier.size(8.dp))
-                                Text(stringResource(R.string.setting_provider_page_save))
-                            }
-                        }
+                if (!provider.builtIn) {
+                    IconButton(onClick = { showDeleteDialog = true }) {
+                        Icon(HugeIcons.Delete01, stringResource(R.string.delete))
                     }
                 }
+            },
+        ) {
+            Button(onClick = onSave) {
+                Icon(HugeIcons.FloppyDisk, contentDescription = null)
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(stringResource(R.string.setting_provider_page_save))
             }
         }
     }
@@ -470,15 +462,22 @@ private fun ModelList(
     onUpdateProvider: (ProviderSetting) -> Unit
 ) {
     val providerManager = koinInject<ProviderManager>()
-    val modelList by produceState(emptyList(), providerSetting) {
-        runCatching {
-            println("loading models...")
-            value = providerManager.getProviderByType(providerSetting)
-                .listModels(providerSetting)
-                .sortedBy { it.modelId }
-                .toList()
-        }.onFailure {
-            it.printStackTrace()
+    // Model selection and display-only edits do not change the model-list request.
+    val requestProvider = providerSetting.copyProvider(models = emptyList(), name = "", enabled = true)
+    var reloadModels by remember { mutableStateOf(0) }
+    val modelListState by produceState<UiState<List<Model>>>(UiState.Loading, requestProvider, reloadModels) {
+        value = UiState.Loading
+        value = try {
+            UiState.Success(
+                providerManager.getProviderByType(requestProvider)
+                    .listModels(requestProvider)
+                    .sortedBy { it.modelId }
+                    .toList()
+            )
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            UiState.Error(e)
         }
     }
     var expanded by rememberSaveable { mutableStateOf(true) }
@@ -536,7 +535,8 @@ private fun ModelList(
                 .offset(y = -ScreenOffset),
         ) {
             AddModelButton(
-                models = modelList,
+                modelsState = modelListState,
+                onRetry = { reloadModels++ },
                 selectedModels = providerSetting.models,
                 onAddModel = {
                     onUpdateProvider(providerSetting.addModel(it))
@@ -719,7 +719,8 @@ private fun ModelSettingsForm(
 
 @Composable
 private fun AddModelButton(
-    models: List<Model>,
+    modelsState: UiState<List<Model>>,
+    onRetry: () -> Unit,
     selectedModels: List<Model>,
     expanded: Boolean,
     onAddModel: (Model) -> Unit,
@@ -737,7 +738,8 @@ private fun AddModelButton(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ModelPicker(
-            models = models,
+            modelsState = modelsState,
+            onRetry = onRetry,
             selectedModels = selectedModels,
             onModelSelected = { model ->
                 val inputModalities = ModelRegistry.MODEL_INPUT_MODALITIES.getData(model.modelId)
@@ -882,14 +884,35 @@ private fun AddModelButton(
 }
 
 @Composable
+private fun ModelListErrorText(error: Throwable) {
+    // Only retain the HTTP status; response text and URLs can contain credentials.
+    val status = Regex("""\bHTTP\s+(\d{3})\b""", RegexOption.IGNORE_CASE)
+        .find(error.message.orEmpty())
+        ?.groupValues?.get(1)
+        ?.toIntOrNull()
+        ?.takeIf { it in 100..599 }
+    Text(
+        text = when {
+            status != null -> "HTTP $status"
+            error is java.net.SocketTimeoutException -> stringResource(R.string.chat_generation_network_timeout)
+            error is java.net.UnknownHostException -> stringResource(R.string.chat_generation_network_unknown_host)
+            error is java.io.IOException -> stringResource(R.string.chat_generation_network_unreachable)
+            else -> stringResource(R.string.backup_page_unknown_error)
+        }
+    )
+}
+
+@Composable
 private fun ModelPicker(
-    models: List<Model>,
+    modelsState: UiState<List<Model>>,
+    onRetry: () -> Unit,
     selectedModels: List<Model>,
     onModelSelected: (Model) -> Unit,
     onModelDeselected: (Model) -> Unit,
     onAllModelSelected: (List<Model>) -> Unit,
     onAllModelDeselected: (List<Model>) -> Unit
 ) {
+    val models = (modelsState as? UiState.Success)?.data.orEmpty()
     var showModal by remember { mutableStateOf(false) }
     if (showModal) {
         ModalBottomSheet(
@@ -931,6 +954,7 @@ private fun ModelPicker(
                                 onAllModelDeselected(filteredModels)
                             }
                         },
+                        enabled = filteredModels.isNotEmpty(),
                     ) {
                         Text(
                             if (unselectedCount > 0) stringResource(
@@ -948,6 +972,50 @@ private fun ModelPicker(
                     verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
                     contentPadding = PaddingValues(8.dp),
                 ) {
+                    when (val state = modelsState) {
+                        UiState.Idle, UiState.Loading -> item {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                LinearWavyProgressIndicator(modifier = Modifier.fillMaxWidth())
+                                Text(stringResource(R.string.workspace_detail_loading))
+                            }
+                        }
+
+                        is UiState.Error -> item {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.error_title_operation),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                                ModelListErrorText(state.error)
+                                Button(onClick = onRetry) {
+                                    Text(stringResource(R.string.chat_page_notice_retry))
+                                }
+                            }
+                        }
+
+                        is UiState.Success -> if (filteredModels.isEmpty()) {
+                            item {
+                                Text(
+                                    text = stringResource(R.string.setting_provider_page_no_models),
+                                    modifier = Modifier.padding(16.dp),
+                                )
+                            }
+                        }
+                    }
+
                     itemsIndexed(filteredModels) { index, it ->
                         Surface(
                             shape = cardGroupItemShape(index, filteredModels.size),

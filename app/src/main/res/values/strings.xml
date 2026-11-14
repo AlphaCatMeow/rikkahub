@@ -1835,4 +1835,8 @@
   <string name="chat_page_select_all">Select all</string>
   <string name="chat_page_deselect_all">Deselect all</string>
   <string name="chat_page_clear_selection">Clear selection</string>
+  <string name="setting_page_language">App language</string>
+  <string name="setting_page_language_system">Follow system</string>
+  <string name="setting_page_app_language">App language</string>
+  <string name="setting_page_language_follow_system">Follow system</string>
 </resources>

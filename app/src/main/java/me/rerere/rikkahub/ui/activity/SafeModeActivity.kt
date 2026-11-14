@@ -5,7 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.horizontalScroll
@@ -60,7 +60,7 @@ import me.rerere.rikkahub.utils.CrashHandler
 import org.koin.android.ext.android.inject
 import kotlin.uuid.Uuid
 
-class SafeModeActivity : ComponentActivity() {
+class SafeModeActivity : AppCompatActivity() {
     private val settingsStore by inject<SettingsStore>()
 
     @OptIn(ExperimentalMaterial3Api::class)

@@ -1827,4 +1827,8 @@
   <string name="chat_page_select_all">Alle auswählen</string>
   <string name="chat_page_deselect_all">Alle abwählen</string>
   <string name="chat_page_clear_selection">Auswahl aufheben</string>
+  <string name="setting_page_language">App-Sprache</string>
+  <string name="setting_page_language_system">Systemsprache verwenden</string>
+  <string name="setting_page_app_language">App-Sprache</string>
+  <string name="setting_page_language_follow_system">Systemsprache verwenden</string>
 </resources>

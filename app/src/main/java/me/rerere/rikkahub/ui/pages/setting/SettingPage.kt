@@ -67,6 +67,7 @@ import me.rerere.hugeicons.stroke.Share04
 import me.rerere.hugeicons.stroke.SmartPhone01
 import me.rerere.hugeicons.stroke.Sun01
 import me.rerere.hugeicons.stroke.Tiktok
+import me.rerere.hugeicons.stroke.Translate
 import me.rerere.hugeicons.stroke.WavingHand01
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
@@ -100,6 +101,11 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
     val launchCount by vm.launchCount.collectAsStateWithLifecycle()
     val filesManager: FilesManager = koinInject()
     val localNetworkPermission = rememberLocalNetworkPermissionState()
+    var showLanguagePicker by remember { mutableStateOf(false) }
+
+    if (showLanguagePicker) {
+        AppLanguagePicker(onDismiss = { showLanguagePicker = false })
+    }
 
     if (!settings.init && launchCount > 100 && (launchCount - settings.sponsorAlertDismissedAt) >= 50) {
         AlertDialog(
@@ -200,6 +206,12 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                             )
                         }
                     }
+                    item(
+                        onClick = { showLanguagePicker = true },
+                        leadingContent = { CardGroupIcon(HugeIcons.Translate, containerColor = containerColor, contentColor = contentColor) },
+                        supportingContent = { Text(currentAppLanguageName()) },
+                        headlineContent = { Text(stringResource(R.string.setting_page_language)) },
+                    )
                     item(
                         onClick = { navController.navigate(Screen.SettingPreferences) },
                         leadingContent = { CardGroupIcon(HugeIcons.Settings03, containerColor = containerColor, contentColor = contentColor) },

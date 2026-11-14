@@ -1826,4 +1826,8 @@ mDNS 주소: .local 호스트네임을 사용하며, IP를 몰라도 같은 네�
   <string name="chat_page_select_all">전체 선택</string>
   <string name="chat_page_deselect_all">모두 선택 해제</string>
   <string name="chat_page_clear_selection">선택 해제</string>
+  <string name="setting_page_language">앱 언어</string>
+  <string name="setting_page_language_system">시스템 설정 따르기</string>
+  <string name="setting_page_app_language">앱 언어</string>
+  <string name="setting_page_language_follow_system">시스템 설정 따르기</string>
 </resources>

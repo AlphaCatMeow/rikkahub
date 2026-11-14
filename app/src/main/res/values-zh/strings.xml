@@ -1837,4 +1837,8 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="chat_page_select_all">全选</string>
   <string name="chat_page_deselect_all">取消全选</string>
   <string name="chat_page_clear_selection">清除选择</string>
+  <string name="setting_page_language">应用语言</string>
+  <string name="setting_page_language_system">跟随系统</string>
+  <string name="setting_page_app_language">应用语言</string>
+  <string name="setting_page_language_follow_system">跟随系统</string>
 </resources>

@@ -1826,4 +1826,8 @@ mDNSアドレス: .localホスト名を使用し、IPを知らなくても同じ
   <string name="chat_page_select_all">すべて選択</string>
   <string name="chat_page_deselect_all">すべて選択解除</string>
   <string name="chat_page_clear_selection">選択を解除</string>
+  <string name="setting_page_language">アプリの言語</string>
+  <string name="setting_page_language_system">システムに従う</string>
+  <string name="setting_page_app_language">アプリの言語</string>
+  <string name="setting_page_language_follow_system">システムに従う</string>
 </resources>

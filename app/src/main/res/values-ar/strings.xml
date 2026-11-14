@@ -1824,4 +1824,8 @@
   <string name="chat_page_select_all">تحديد الكل</string>
   <string name="chat_page_deselect_all">إلغاء تحديد الكل</string>
   <string name="chat_page_clear_selection">إلغاء التحديد</string>
+  <string name="setting_page_language">لغة التطبيق</string>
+  <string name="setting_page_language_system">اتباع النظام</string>
+  <string name="setting_page_app_language">لغة التطبيق</string>
+  <string name="setting_page_language_follow_system">اتباع النظام</string>
 </resources>
