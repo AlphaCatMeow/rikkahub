@@ -15,7 +15,22 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
  * 创作记录、草稿里存的 id 因此仍然有效。没有图像/视频模型、已停用或协议不支持时返回 null。
  */
 fun ProviderSetting.toMediaProvider(): MediaGenerationProviderSetting? {
-    if (this !is ProviderSetting.OpenAI || !enabled) return null
+    if (!enabled) return null
+    if (this is ProviderSetting.Google) {
+        // Vertex needs a separate authentication and endpoint adapter.
+        if (vertexAI) return null
+        val images = models.filter { it.type == ModelType.IMAGE }.map { model ->
+            MediaGenerationModel(modelId = model.modelId, kind = MediaKind.IMAGE, displayName = model.displayName, id = model.id)
+        }
+        if (images.isEmpty()) return null
+        return MediaGenerationProviderSetting.Google(
+            id = id, name = name,
+            apiKey = apiKey.split(KEY_SEPARATOR).firstOrNull { it.isNotBlank() }.orEmpty(),
+            baseUrl = baseUrl, models = images,
+            customHeaders = customHeaders.associate { it.name to it.value },
+        )
+    }
+    if (this !is ProviderSetting.OpenAI) return null
     val mediaModels = models.mapNotNull { model ->
         val kind = when (model.type) {
             ModelType.IMAGE -> MediaKind.IMAGE
@@ -45,8 +60,13 @@ fun ProviderSetting.toMediaProvider(): MediaGenerationProviderSetting? {
 }
 
 /** 旧的独立媒体提供商迁移成对话提供商，id 不变，接口显式写明，不再靠域名判断 */
-fun MediaGenerationProviderSetting.toChatProvider(): ProviderSetting.OpenAI {
+fun MediaGenerationProviderSetting.toChatProvider(): ProviderSetting {
     val vendor = when (this) {
+        is MediaGenerationProviderSetting.Google -> return ProviderSetting.Google(
+            id = id, name = name, apiKey = apiKey, baseUrl = baseUrl,
+            models = models.map { Model(modelId = it.modelId, displayName = it.displayName, id = it.id, type = ModelType.IMAGE) },
+            customHeaders = customHeaders.map { me.rerere.ai.provider.CustomHeader(it.key, it.value) },
+        )
         is MediaGenerationProviderSetting.OpenAI -> MediaVendor.OPENAI
         is MediaGenerationProviderSetting.Aliyun -> MediaVendor.ALIYUN
         is MediaGenerationProviderSetting.Volcengine -> MediaVendor.VOLCENGINE

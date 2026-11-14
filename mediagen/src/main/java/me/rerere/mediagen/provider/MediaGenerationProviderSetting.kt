@@ -44,6 +44,30 @@ sealed class MediaGenerationProviderSetting {
     ): MediaGenerationProviderSetting
 
     @Serializable
+    @SerialName("google")
+    data class Google(
+        override val id: Uuid = Uuid.random(),
+        override val name: String = "Google",
+        override val apiKey: String = "",
+        override val baseUrl: String = "https://generativelanguage.googleapis.com/v1beta",
+        override val models: List<MediaGenerationModel> = emptyList(),
+        val customHeaders: Map<String, String> = emptyMap(),
+    ) : MediaGenerationProviderSetting() {
+        override val supportedKinds: Set<MediaKind>
+            get() = setOf(MediaKind.IMAGE)
+
+        override fun copyProvider(
+            id: Uuid,
+            name: String,
+            apiKey: String,
+            baseUrl: String,
+            models: List<MediaGenerationModel>,
+        ): MediaGenerationProviderSetting = copy(
+            id = id, name = name, apiKey = apiKey, baseUrl = baseUrl, models = models,
+        )
+    }
+
+    @Serializable
     @SerialName("openai")
     data class OpenAI(
         override val id: Uuid = Uuid.random(),
@@ -220,6 +244,7 @@ sealed class MediaGenerationProviderSetting {
     companion object {
         val Types by lazy {
             listOf(
+                Google::class,
                 OpenAI::class,
                 Aliyun::class,
                 Volcengine::class,

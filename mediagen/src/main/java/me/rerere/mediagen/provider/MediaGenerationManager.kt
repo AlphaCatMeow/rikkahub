@@ -24,6 +24,7 @@ import kotlin.time.Duration.Companion.seconds
 class MediaGenerationManager(
     client: OkHttpClient = OkHttpClient(),
 ) {
+    private val google = me.rerere.mediagen.provider.providers.google.GoogleMediaGenerationProvider(client)
     private val openAI = OpenAIMediaGenerationProvider(client)
     private val aliyun = AliyunMediaGenerationProvider(client)
     private val volcengine = VolcengineMediaGenerationProvider(client)
@@ -133,6 +134,7 @@ class MediaGenerationManager(
 
     private fun provider(setting: MediaGenerationProviderSetting): MediaGenerationProvider<*> =
         when (setting) {
+            is MediaGenerationProviderSetting.Google -> google
             is MediaGenerationProviderSetting.OpenAI -> openAI
             is MediaGenerationProviderSetting.Aliyun -> aliyun
             is MediaGenerationProviderSetting.Volcengine -> volcengine

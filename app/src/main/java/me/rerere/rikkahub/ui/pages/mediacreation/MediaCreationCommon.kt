@@ -163,6 +163,14 @@ internal data class MediaCreationPresets(
 }
 
 internal fun MediaGenerationProviderSetting.presets(kind: MediaKind): MediaCreationPresets = when (this) {
+    is MediaGenerationProviderSetting.Google -> when (kind) {
+        MediaKind.IMAGE -> MediaCreationPresets(
+            resolutions = listOf("1K", "2K", "4K"),
+            aspectRatios = IMAGE_ASPECT_RATIOS,
+        )
+        MediaKind.VIDEO -> MediaCreationPresets()
+    }
+
     // gpt-image-1 / 1.5 只接受前三个尺寸；gpt-image-2 起接受 16 倍数的任意尺寸，最大 3840x2160。
     // 选了比例时，档位会按比例换算成像素尺寸；dall-e-3 的质量是 standard / hd，可以手动输入
     is MediaGenerationProviderSetting.OpenAI -> MediaCreationPresets(

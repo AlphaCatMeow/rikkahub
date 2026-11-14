@@ -33,6 +33,9 @@ class MediaGenerationCapabilitiesTest {
     private fun buildBody(setting: MediaGenerationProviderSetting, kind: MediaKind, request: MediaGenerationRequest) {
         val model = MediaGenerationModel(modelId = "model", kind = kind)
         when (setting) {
+            is MediaGenerationProviderSetting.Google ->
+                me.rerere.mediagen.provider.providers.google.GoogleMediaGenerationProvider(client).buildBody(request)
+
             is MediaGenerationProviderSetting.OpenAI ->
                 OpenAIMediaGenerationProvider(client).buildGenerationBody(setting, model, request)
 

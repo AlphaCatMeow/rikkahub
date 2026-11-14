@@ -78,6 +78,7 @@ import okhttp3.Response
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
 import org.apache.commons.text.StringEscapeUtils
+import java.io.IOException
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
 
@@ -100,7 +101,7 @@ class GoogleProvider(private val client: OkHttpClient, context: Context? = null)
 
     private fun buildUrl(providerSetting: ProviderSetting.Google, path: String): HttpUrl {
         return if (!providerSetting.vertexAI) {
-            "${providerSetting.baseUrl}/$path".toHttpUrl()
+            "${providerSetting.baseUrl.trim().trimEnd('/')}/$path".toHttpUrl()
         } else if (providerSetting.useServiceAccount) {
             "https://aiplatform.googleapis.com/v1/projects/${providerSetting.projectId}/locations/${providerSetting.location}/$path".toHttpUrl()
         } else {
@@ -136,42 +137,74 @@ class GoogleProvider(private val client: OkHttpClient, context: Context? = null)
 
     override suspend fun listModels(providerSetting: ProviderSetting.Google): List<Model> =
         withContext(Dispatchers.IO) {
-            val url = buildUrl(providerSetting = providerSetting, path = "models?pageSize=100")
-            val request = transformRequest(
-                providerSetting = providerSetting,
-                request = Request.Builder()
-                    .url(url)
-                    .headers(providerSetting.mergeCustomHeaders())
-                    .get()
-                    .build()
-            )
-            val response = client.newCall(request).await()
-            if (response.isSuccessful) {
-                val body = response.body?.string() ?: error("empty body")
-                Log.d(TAG, "listModels: $body")
-                val bodyObject = json.parseToJsonElement(body).jsonObject
-                val models = bodyObject["models"]?.jsonArray ?: return@withContext emptyList()
-
-                models.mapNotNull {
-                    val modelObject = it.jsonObject
-
-                    // 忽略非chat/embedding模型
-                    val supportedGenerationMethods =
-                        modelObject["supportedGenerationMethods"]!!.jsonArray
-                            .map { method -> method.jsonPrimitive.content }
-                    if ("generateContent" !in supportedGenerationMethods && "embedContent" !in supportedGenerationMethods) {
+            val url = buildUrl(providerSetting = providerSetting, path = "models")
+                .newBuilder()
+                .addQueryParameter("pageSize", "100")
+                .build()
+            val models = mutableListOf<Model>()
+            val seenPageTokens = mutableSetOf<String>()
+            var pageToken: String? = null
+            do {
+                val pageUrl = url.newBuilder().apply {
+                    pageToken?.let { addQueryParameter("pageToken", it) }
+                }.build()
+                val request = transformRequest(
+                    providerSetting = providerSetting,
+                    request = Request.Builder()
+                        .url(pageUrl)
+                        .headers(providerSetting.mergeCustomHeaders())
+                        .get()
+                        .build()
+                )
+                val bodyObject = client.newCall(request).await().use { response ->
+                    if (!response.isSuccessful) {
+                        // Provider errors can echo credentials, so do not expose the body or request URL.
+                        throw IOException("Failed to list Google models (HTTP ${response.code}). Check the provider URL, API key and permissions.")
+                    }
+                    try {
+                        json.parseToJsonElement(response.body.string()) as? JsonObject
+                            ?: throw IOException("Invalid Google models response: expected an object.")
+                    } catch (_: IllegalArgumentException) {
+                        throw IOException("Invalid Google models response. Check that the provider URL uses the Google API format.")
+                    }
+                }
+                val pageModels = when (val items = bodyObject["models"]) {
+                    is JsonArray -> items
+                    null -> if (bodyObject.isEmpty() || bodyObject.keys == setOf("nextPageToken")) {
+                        JsonArray(emptyList())
+                    } else {
+                        throw IOException("Invalid Google models response: missing models array. Check the provider API format.")
+                    }
+                    else -> throw IOException("Invalid Google models response: expected a models array.")
+                }
+                models += pageModels.mapNotNull { item ->
+                    val modelObject = item as? JsonObject ?: return@mapNotNull null
+                    // Some Gemini-compatible gateways omit capability metadata or return null.
+                    // Only filter by capabilities when the gateway actually supplies an array.
+                    val supportedMethods = (modelObject["supportedGenerationMethods"] as? JsonArray)
+                        ?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull }
+                    if (supportedMethods != null && "generateContent" !in supportedMethods && "embedContent" !in supportedMethods) {
                         return@mapNotNull null
                     }
-
+                    val modelId = (modelObject["name"] as? JsonPrimitive)?.contentOrNull
+                        ?.removePrefix("models/")?.takeIf { it.isNotBlank() }
+                        ?: return@mapNotNull null
                     Model(
-                        modelId = modelObject["name"]!!.jsonPrimitive.content.substringAfter("/"),
-                        displayName = modelObject["displayName"]!!.jsonPrimitive.content,
-                        type = if ("generateContent" in supportedGenerationMethods) ModelType.CHAT else ModelType.EMBEDDING,
+                        modelId = modelId,
+                        displayName = (modelObject["displayName"] as? JsonPrimitive)?.contentOrNull
+                            ?.takeIf { it.isNotBlank() } ?: modelId,
+                        type = if (supportedMethods == null || "generateContent" in supportedMethods) ModelType.CHAT else ModelType.EMBEDDING,
                     )
                 }
-            } else {
-                emptyList()
-            }
+                pageToken = (bodyObject["nextPageToken"] as? JsonPrimitive)?.contentOrNull
+                    ?.takeIf { it.isNotBlank() }
+                pageToken?.let { token ->
+                    if (!seenPageTokens.add(token)) {
+                        throw IOException("Invalid Google models response: repeated pagination token.")
+                    }
+                }
+            } while (pageToken != null)
+            models.distinctBy { it.modelId }
         }
 
     override suspend fun generateText(

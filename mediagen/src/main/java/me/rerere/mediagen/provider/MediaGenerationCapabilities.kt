@@ -64,6 +64,11 @@ data class MediaGenerationCapabilities(
 /** 适配器没有实现 [kind] 时返回 null。 */
 fun MediaGenerationProviderSetting.capabilities(kind: MediaKind): MediaGenerationCapabilities? =
     when (this) {
+        is MediaGenerationProviderSetting.Google -> when (kind) {
+            MediaKind.IMAGE -> GOOGLE_IMAGE
+            MediaKind.VIDEO -> null
+        }
+
         is MediaGenerationProviderSetting.OpenAI -> when (kind) {
             MediaKind.IMAGE -> OPENAI_IMAGE
             MediaKind.VIDEO -> null
@@ -95,6 +100,12 @@ private val REFERENCE_ONLY = setOf(ImageRole.REFERENCE)
 private val ALL_IMAGE_ROLES = ImageRole.entries.toSet()
 
 // 比例按档位换算成 size 下发（Grok 走 aspect_ratio），见 OpenAIMediaGenerationProvider
+private val GOOGLE_IMAGE = MediaGenerationCapabilities(
+    parameters = setOf(MediaGenerationParameter.RESOLUTION, MediaGenerationParameter.ASPECT_RATIO),
+    imageRoles = REFERENCE_ONLY,
+    requiresPrompt = true,
+)
+
 private val OPENAI_IMAGE = MediaGenerationCapabilities(
     parameters = setOf(
         MediaGenerationParameter.COUNT,
