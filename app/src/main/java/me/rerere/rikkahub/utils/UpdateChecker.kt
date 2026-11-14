@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import me.rerere.common.http.await
@@ -21,7 +22,7 @@ import me.rerere.rikkahub.BuildConfig
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
-private const val API_URL = "https://updates.rikka-ai.com/"
+internal const val UPDATE_API_URL = "https://api.github.com/repos/AlphaCatMeow/rikkahub/releases/latest"
 
 class UpdateChecker(
     private val client: OkHttpClient,
@@ -40,20 +41,28 @@ class UpdateChecker(
         emit(
             UiState.Success(
                 data = try {
-                    val response = client.newCall(
+                    client.newCall(
                         Request.Builder()
-                            .url(API_URL)
+                            .url(UPDATE_API_URL)
                             .get()
+                            .header("Accept", "application/vnd.github+json")
+                            .header("X-GitHub-Api-Version", "2022-11-28")
                             .addHeader(
                                 "User-Agent",
                                 "RikkaHub ${BuildConfig.VERSION_NAME} #${BuildConfig.VERSION_CODE}"
                             )
                             .build()
-                    ).await()
-                    if (response.isSuccessful) {
-                        json.decodeFromString<UpdateInfo>(response.body.string())
-                    } else {
-                        throw Exception("Failed to fetch update info")
+                    ).await().use { response ->
+                        when {
+                            response.isSuccessful -> decodeReleaseUpdate(response.body.string(), json)
+                            response.code == 404 -> UpdateInfo(
+                                version = BuildConfig.VERSION_NAME,
+                                publishedAt = "",
+                                changelog = "",
+                                downloads = emptyList(),
+                            )
+                            else -> error("Failed to fetch update info (HTTP ${response.code})")
+                        }
                     }
                 } catch (e: Exception) {
                     throw Exception("Failed to fetch update info", e)
@@ -90,6 +99,37 @@ class UpdateChecker(
     }
 }
 
+internal fun decodeReleaseUpdate(body: String, json: Json = Json { ignoreUnknownKeys = true }): UpdateInfo {
+    val release = json.decodeFromString<GitHubRelease>(body)
+    return UpdateInfo(
+        version = release.tagName.removePrefix("fork-").removePrefix("v"),
+        publishedAt = release.publishedAt,
+        changelog = release.body.orEmpty(),
+        downloads = release.assets.filter { it.name.endsWith(".apk", ignoreCase = true) }.map { asset ->
+            UpdateDownload(
+                name = asset.name,
+                url = asset.browserDownloadUrl,
+                size = String.format(java.util.Locale.ROOT, "%.1f MB", asset.size / 1_000_000.0),
+            )
+        },
+    )
+}
+
+@Serializable
+private data class GitHubRelease(
+    @SerialName("tag_name") val tagName: String,
+    @SerialName("published_at") val publishedAt: String,
+    val body: String? = null,
+    val assets: List<GitHubReleaseAsset> = emptyList(),
+)
+
+@Serializable
+private data class GitHubReleaseAsset(
+    val name: String,
+    @SerialName("browser_download_url") val browserDownloadUrl: String,
+    val size: Long,
+)
+
 @Serializable
 data class UpdateDownload(
     val name: String,
@@ -103,7 +143,17 @@ data class UpdateInfo(
     val publishedAt: String,
     val changelog: String,
     val downloads: List<UpdateDownload>
-)
+) {
+    fun isNewerThan(currentVersion: String): Boolean {
+        val current = currentVersion.substringBefore('+')
+        val latest = version.substringBefore('+')
+        // Older Fork APKs kept the upstream version name without the Fork revision.
+        if ('-' !in current && '-' in latest && latest.substringBefore('-') == current) {
+            return true
+        }
+        return Version(version) > Version(currentVersion)
+    }
+}
 
 /**
  * 版本号值类，封装版本号字符串并提供比较功能

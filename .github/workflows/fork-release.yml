@@ -96,7 +96,14 @@ jobs:
           ./gradlew :mediagen:testDebugUnitTest
 
       - name: Gradle Build
-        run: ./gradlew assembleGithubRelease
+        run: |
+          FORK_VERSION="${GITHUB_REF_NAME#fork-v}"
+          if [[ ! "$FORK_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid Fork version: $GITHUB_REF_NAME"
+            exit 1
+          fi
+          sed -i "s/versionName = \"[^\"]*\"/versionName = \"$FORK_VERSION\"/" app/build.gradle.kts
+          ./gradlew assembleGithubRelease
 
       # 确认 APK 确实用 Fork 密钥签了名（签名配置缺失时 release 包会是未签名的）
       - name: Verify signature
