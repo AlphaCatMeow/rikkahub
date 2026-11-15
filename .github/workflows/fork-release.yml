@@ -7,6 +7,12 @@ on:
   push:
     tags:
       - 'fork-v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Existing or new Fork release version (for example 3.3.1)
+        required: true
+        type: string
 
 jobs:
   build:
@@ -96,18 +102,25 @@ jobs:
           ./gradlew :mediagen:testDebugUnitTest
 
       - name: Gradle Build
+        id: build
         run: |
-          FORK_VERSION="${GITHUB_REF_NAME#fork-v}"
+          FORK_VERSION="${{ inputs.version }}"
+          if [[ -z "$FORK_VERSION" ]]; then
+            FORK_VERSION="${GITHUB_REF_NAME#fork-v}"
+          fi
           if [[ ! "$FORK_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
             echo "Invalid Fork version: $GITHUB_REF_NAME"
             exit 1
           fi
           sed -i "s/versionName = \"[^\"]*\"/versionName = \"$FORK_VERSION\"/" app/build.gradle.kts
           ./gradlew assembleGithubRelease
-          cp app/build/outputs/apk/github/release/app-github-arm64-v8a-release.apk \
-            "app/build/outputs/apk/github/release/app-github-arm64-v8a-release-$FORK_VERSION.apk"
+          for ABI in arm64-v8a x86_64 universal; do
+            cp "app/build/outputs/apk/github/release/app-github-$ABI-release.apk" \
+              "app/build/outputs/apk/github/release/app-github-$ABI-release-$FORK_VERSION.apk"
+          done
           cp app/build/outputs/mapping/githubRelease/mapping.txt \
             "app/build/outputs/mapping/githubRelease/mapping-$FORK_VERSION.txt"
+          echo "version=$FORK_VERSION" >> "$GITHUB_OUTPUT"
 
       # 确认 APK 确实用 Fork 密钥签了名（签名配置缺失时 release 包会是未签名的）
       - name: Verify signature
@@ -120,8 +133,10 @@ jobs:
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          name: ${{ github.ref_name }}
+          tag_name: fork-v${{ steps.build.outputs.version }}
+          name: ${{ steps.build.outputs.version }}
           make_latest: true
+          overwrite_files: true
           body: |
             更新内容:
 
@@ -131,5 +146,5 @@ jobs:
 
             - Fix GPT image generation
           files: |
-            app/build/outputs/apk/github/release/app-github-arm64-v8a-release-*.apk
-            app/build/outputs/mapping/githubRelease/mapping-*.txt
+            app/build/outputs/apk/github/release/app-github-*-release-${{ steps.build.outputs.version }}.apk
+            app/build/outputs/mapping/githubRelease/mapping-${{ steps.build.outputs.version }}.txt
