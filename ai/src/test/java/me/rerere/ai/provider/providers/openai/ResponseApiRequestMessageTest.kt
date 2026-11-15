@@ -475,6 +475,24 @@ class ResponseApiRequestMessageTest {
     }
 
     @Test
+    fun `image generation should keep response state and use the gateway default image model`() {
+        val provider = ProviderSetting.OpenAI(baseUrl = "https://api.rolldeck.example/v1")
+        val requestBody = invokeBuildRequestBody(
+            providerSetting = provider,
+            params = createToolParams(builtInTools = setOf(BuiltInTools.ImageGeneration)),
+        )
+
+        assertFalse("image calls need stored response state for replay", requestBody.containsKey("store"))
+        val imageTool = requestBody["tools"]!!.jsonArray.single().jsonObject
+        assertEquals("image_generation", imageTool["type"]?.jsonPrimitive?.content)
+        assertFalse("custom gateways may not expose the OpenAI model alias", imageTool.containsKey("model"))
+        assertEquals(
+            "false",
+            invokeBuildRequestBody(provider, createToolParams())["store"]?.jsonPrimitive?.content,
+        )
+    }
+
+    @Test
     fun `server tool should replay the original response item`() {
         val rawItem = buildJsonObject {
             put("type", "web_search_call")

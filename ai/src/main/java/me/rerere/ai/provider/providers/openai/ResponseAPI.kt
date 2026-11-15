@@ -239,7 +239,8 @@ class ResponseAPI(
         return buildJsonObject {
             put("model", params.model.modelId)
             put("stream", stream)
-            put("store", false)
+            // Image calls are replayed on later turns and need the server-side response state.
+            if (BuiltInTools.ImageGeneration !in params.model.tools) put("store", false)
 
             if (capabilities.supportsSamplingParams) {
                 if (isModelAllowTemperature(params.model)) {
@@ -325,7 +326,6 @@ class ResponseAPI(
                             BuiltInTools.ImageGeneration -> {
                                 add(buildJsonObject {
                                     put("type", "image_generation")
-                                    put("model", "gpt-image-2.5-sunburst")
                                 })
                             }
                         }
