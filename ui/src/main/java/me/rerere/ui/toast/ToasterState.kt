@@ -3,7 +3,10 @@ package me.rerere.ui.toast
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.CoroutineScope
@@ -30,6 +33,9 @@ class ToasterState internal constructor(
     private val nextId = AtomicLong()
 
     internal val items = mutableStateListOf<ToastItem>()
+
+    /** 当前挂载的覆盖层 Toaster 数量（Dialog 等独立窗口里的），大于 0 时由覆盖层负责显示 */
+    internal var overlayCount by mutableIntStateOf(0)
 
     fun show(
         message: String,

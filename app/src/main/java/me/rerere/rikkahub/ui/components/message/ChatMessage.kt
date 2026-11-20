@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -72,6 +73,7 @@ import me.rerere.ai.ui.UIMessageAnnotation
 import me.rerere.ai.ui.UIMessagePart
 import me.rerere.ai.ui.isEmptyUIMessage
 import me.rerere.hugeicons.HugeIcons
+import me.rerere.hugeicons.stroke.Download01
 import me.rerere.hugeicons.stroke.File02
 import me.rerere.hugeicons.stroke.MusicNote03
 import me.rerere.hugeicons.stroke.Video01
@@ -88,6 +90,7 @@ import me.rerere.rikkahub.ui.components.richtext.buildMarkdownPreviewHtml
 import me.rerere.rikkahub.ui.components.ui.ChainOfThought
 import me.rerere.rikkahub.ui.components.ui.Favicon
 import me.rerere.rikkahub.ui.components.ui.FaviconRow
+import me.rerere.rikkahub.ui.components.ui.rememberImageSaver
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.modifier.shimmer
 import me.rerere.rikkahub.ui.context.LocalSettings
@@ -498,6 +501,37 @@ private fun MessagePartsBlock(
                                     .background(MaterialTheme.colorScheme.surfaceVariant)
                                     .shimmer(isLoading = true)
                             )
+                        } else if (role == MessageRole.ASSISTANT) {
+                            // 模型生成的图片：右下角带保存按钮
+                            val saveImage = rememberImageSaver()
+                            Box {
+                                ZoomableAsyncImage(
+                                    model = part.url,
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .clip(MaterialTheme.shapes.large)
+                                        .height(72.dp)
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.BottomEnd)
+                                        .padding(4.dp)
+                                        .size(24.dp)
+                                        .clip(CircleShape)
+                                        .background(Color.Black.copy(alpha = 0.55f))
+                                        .clickable(
+                                            onClickLabel = stringResource(R.string.chat_page_save),
+                                        ) { saveImage(part.url) },
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        imageVector = HugeIcons.Download01,
+                                        contentDescription = stringResource(R.string.chat_page_save),
+                                        tint = Color.White,
+                                        modifier = Modifier.size(14.dp),
+                                    )
+                                }
+                            }
                         } else {
                             ZoomableAsyncImage(
                                 model = part.url,

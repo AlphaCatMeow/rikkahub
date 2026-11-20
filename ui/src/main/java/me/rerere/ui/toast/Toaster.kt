@@ -30,6 +30,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -62,13 +63,25 @@ import kotlin.math.sign
 /**
  * 直接画在调用处的布局里，不开新窗口，toast 以外的区域不拦截触摸。
  * 需要放在页面内容之上（例如根 Box 的最后一个子节点）。
+ *
+ * Dialog 是独立窗口，会盖住 Activity 里的 Toaster。在 Dialog 内容里再放一个 [overlay] = true 的 Toaster，
+ * 它存在期间由它显示 toast，根部那个暂停显示，Dialog 关闭后未消失的 toast 回到根部继续显示。
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun Toaster(
     state: ToasterState,
     modifier: Modifier = Modifier,
+    overlay: Boolean = false,
 ) {
+    if (overlay) {
+        DisposableEffect(state) {
+            state.overlayCount++
+            onDispose { state.overlayCount-- }
+        }
+    } else if (state.overlayCount > 0) {
+        return
+    }
     val motionScheme = MaterialTheme.motionScheme
     Column(
         modifier = modifier
