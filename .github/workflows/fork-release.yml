@@ -140,11 +140,13 @@ jobs:
           body: |
             更新内容:
 
-            - 修复 GPT 图像生成异常
+            - 修复保存图片时「已保存」提示被图片预览遮挡
+            - 生成的图片增加保存按钮
 
             Updates:
 
-            - Fix GPT image generation
+            - Fix the "Image saved" toast being hidden behind the image preview
+            - Add a save button to generated images
           files: |
             app/build/outputs/apk/github/release/app-github-*-release-${{ steps.build.outputs.version }}.apk
             app/build/outputs/mapping/githubRelease/mapping-${{ steps.build.outputs.version }}.txt
